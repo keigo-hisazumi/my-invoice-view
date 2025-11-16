@@ -127,17 +127,12 @@
         <textarea v-model="invoice.notes" rows="4" placeholder="特記事項があればご記入ください"></textarea>
       </div>
     </div>
-
-    <div class="form-actions">
-      <button @click="generatePDF" class="btn-primary">PDFを生成</button>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { reactive } from 'vue'
 import type { InvoiceData } from '../types/invoice'
-import { generateInvoicePDF } from '../utils/pdfGenerator'
 
 // 請求書データの初期化
 const invoice = reactive<InvoiceData>({
@@ -205,10 +200,6 @@ const calculateTotals = () => {
 // 初期計算
 calculateTotals()
 
-// PDFを生成
-const generatePDF = () => {
-  generateInvoicePDF(invoice)
-}
 </script>
 
 <style scoped>
@@ -364,26 +355,6 @@ h3 {
   border-top: 2px solid #3498db;
   margin-top: 10px;
   padding-top: 15px;
-}
-
-.form-actions {
-  text-align: center;
-  margin-top: 30px;
-}
-
-.btn-primary {
-  padding: 15px 40px;
-  background: #3498db;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.btn-primary:hover {
-  background: #2980b9;
 }
 
 @media (max-width: 768px) {

@@ -6,7 +6,7 @@ import InvoiceForm from './components/InvoiceForm.vue'
   <div class="app">
     <header class="app-header">
       <h1>請求書作成システム</h1>
-      <p>請求書を作成してPDFで出力できます</p>
+      <p>請求書を作成できます</p>
     </header>
     <main>
       <InvoiceForm />
