@@ -9,6 +9,7 @@ export interface InvoiceItem {
 }
 
 export interface InvoiceData {
+  id?: string                    // ID（一覧表示用）
   invoiceNumber: string      // 請求書番号
   invoiceDate: string        // 請求日
   dueDate: string           // 支払期限
@@ -35,4 +36,18 @@ export interface InvoiceData {
   
   // 備考
   notes: string
+  
+  // メタデータ
+  createdAt?: string        // 作成日時
+  updatedAt?: string        // 更新日時
+}
+
+// 請求書一覧表示用の簡易型
+export interface InvoiceListItem {
+  id: string
+  invoiceNumber: string
+  invoiceDate: string
+  clientName: string
+  total: number
+  createdAt: string
 }

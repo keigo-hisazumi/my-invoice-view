@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import InvoiceForm from './components/InvoiceForm.vue'
+import { RouterView } from 'vue-router'
 </script>
 
 <template>
   <div class="app">
     <header class="app-header">
       <h1>請求書作成システム</h1>
-      <p>請求書を作成できます</p>
+      <p>請求書を作成・管理できます</p>
     </header>
     <main>
-      <InvoiceForm />
+      <RouterView />
     </main>
   </div>
 </template>
