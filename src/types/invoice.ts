@@ -5,8 +5,27 @@ export interface InvoiceItem {
   description: string  // 品名
   quantity: number     // 数量
   unitPrice: number    // 単価
+  unit: string         // 単位
   amount: number       // 金額
 }
+
+// 明細プリセット
+export interface ItemPreset {
+  description: string
+  unitPrice: number
+  unit: string
+}
+
+export const ITEM_PRESETS: ItemPreset[] = [
+  { description: 'リズム録音', unitPrice: 5000, unit: '時間' },
+  { description: 'ドラム録音', unitPrice: 5000, unit: '時間' },
+  { description: 'ダビング録音', unitPrice: 3500, unit: '時間' },
+  { description: 'ボーカル録音', unitPrice: 3500, unit: '時間' },
+  { description: 'Mix (Mastering込み)', unitPrice: 10000, unit: '曲' },
+  { description: 'Mastering', unitPrice: 2000, unit: '曲' },
+  { description: 'お試し録音', unitPrice: 2500, unit: '時間' },
+  { description: '割引', unitPrice: -1000, unit: '' }
+]
 
 export interface InvoiceData {
   id?: string                    // ID（一覧表示用）

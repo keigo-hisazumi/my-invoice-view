@@ -69,31 +69,35 @@
       <div class="items-header">
         <span class="col-desc">品名</span>
         <span class="col-qty">数量</span>
+        <span class="col-unit">単位</span>
         <span class="col-price">単価</span>
         <span class="col-amount">金額</span>
         <span class="col-actions"></span>
       </div>
       <div v-for="(item, index) in invoice.items" :key="item.id" class="item-row">
-        <input 
-          v-model="item.description" 
-          type="text" 
-          placeholder="商品名" 
+        <select
+          :value="item.description"
           class="col-desc"
-          @input="updateItem(index)"
-        />
-        <input 
-          v-model.number="item.quantity" 
-          type="number" 
-          min="0" 
+          @change="onPresetChange(index, ($event.target as HTMLSelectElement).value)"
+        >
+          <option value="">選択してください</option>
+          <option v-for="preset in ITEM_PRESETS" :key="preset.description" :value="preset.description">
+            {{ preset.description }}
+          </option>
+        </select>
+        <input
+          v-model.number="item.quantity"
+          type="number"
+          min="0"
           step="1"
           class="col-qty"
           @input="updateItem(index)"
         />
-        <input 
-          v-model.number="item.unitPrice" 
-          type="number" 
-          min="0" 
-          step="0.01"
+        <span class="col-unit">{{ item.unit }}</span>
+        <input
+          v-model.number="item.unitPrice"
+          type="number"
+          step="1"
           class="col-price"
           @input="updateItem(index)"
         />
@@ -140,6 +144,7 @@
 import { reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import type { InvoiceData } from '../types/invoice'
+import { ITEM_PRESETS } from '../types/invoice'
 
 const router = useRouter()
 
@@ -161,6 +166,7 @@ const invoice = reactive<InvoiceData>({
       description: '',
       quantity: 1,
       unitPrice: 0,
+      unit: '',
       amount: 0
     }
   ],
@@ -178,8 +184,26 @@ const addItem = () => {
     description: '',
     quantity: 1,
     unitPrice: 0,
+    unit: '',
     amount: 0
   })
+}
+
+// プリセット選択時の処理
+const onPresetChange = (index: number, description: string) => {
+  const item = invoice.items[index]
+  if (!item) return
+  const preset = ITEM_PRESETS.find(p => p.description === description)
+  if (preset) {
+    item.description = preset.description
+    item.unitPrice = preset.unitPrice
+    item.unit = preset.unit
+  } else {
+    item.description = ''
+    item.unitPrice = 0
+    item.unit = ''
+  }
+  updateItem(index)
 }
 
 // 明細行を削除
@@ -362,7 +386,7 @@ h3 {
 
 .items-header {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 100px;
+  grid-template-columns: 2fr 1fr 0.7fr 1fr 1fr 100px;
   gap: 10px;
   padding: 10px;
   background: #f8f9fa;
@@ -373,7 +397,7 @@ h3 {
 
 .item-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 100px;
+  grid-template-columns: 2fr 1fr 0.7fr 1fr 1fr 100px;
   gap: 10px;
   padding: 10px;
   margin-bottom: 10px;
@@ -383,15 +407,18 @@ h3 {
   border-radius: 4px;
 }
 
-.item-row input {
+.item-row input,
+.item-row select {
   padding: 8px;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 14px;
+  background: white;
 }
 
 .col-desc { width: 100%; }
 .col-qty { width: 100%; text-align: center; }
+.col-unit { width: 100%; text-align: center; color: #555; }
 .col-price { width: 100%; text-align: right; }
 .col-amount { 
   width: 100%; 
