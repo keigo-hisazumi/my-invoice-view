@@ -152,6 +152,7 @@ const invoice = reactive<InvoiceData>({
       description: '',
       quantity: 1,
       unitPrice: 0,
+      unit: '',
       amount: 0
     }
   ],
@@ -169,6 +170,7 @@ const addItem = () => {
     description: '',
     quantity: 1,
     unitPrice: 0,
+    unit: '',
     amount: 0
   })
 }
