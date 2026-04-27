@@ -2,6 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 import InvoiceList from '../views/InvoiceList.vue'
 import InvoiceCreate from '../views/InvoiceCreate.vue'
 import Login from '../views/Login.vue'
+import BillingAddressList from '../views/BillingAddressList.vue'
+import BillingAddressForm from '../views/BillingAddressForm.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -35,6 +37,24 @@ const router = createRouter({
       name: 'invoice-view',
       component: InvoiceCreate,
       meta: { title: '請求書詳細' }
+    },
+    {
+      path: '/billing-addresses',
+      name: 'billing-address-list',
+      component: BillingAddressList,
+      meta: { title: '請求先一覧' }
+    },
+    {
+      path: '/billing-addresses/create',
+      name: 'billing-address-create',
+      component: BillingAddressForm,
+      meta: { title: '請求先追加' }
+    },
+    {
+      path: '/billing-addresses/edit/:id',
+      name: 'billing-address-edit',
+      component: BillingAddressForm,
+      meta: { title: '請求先編集' }
     }
   ]
 })
