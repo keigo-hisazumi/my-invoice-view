@@ -62,17 +62,20 @@ const handleLogout = () => {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .header-text {
   text-align: center;
   flex: 1;
+  min-width: 0;
 }
 
 .app-header h1 {
   margin: 0;
   font-size: 32px;
   font-weight: 600;
+  word-break: break-word;
 }
 
 .app-header p {
@@ -113,8 +116,49 @@ main {
 }
 
 @media (max-width: 768px) {
+  .app-header {
+    padding: 20px 16px;
+  }
+
   .header-inner {
     flex-direction: column;
+    gap: 12px;
+  }
+
+  .app-header h1 {
+    font-size: 24px;
+  }
+
+  .app-header p {
+    font-size: 14px;
+    margin-top: 6px;
+  }
+
+  main {
+    padding: 16px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-header {
+    padding: 16px 12px;
+  }
+
+  .app-header h1 {
+    font-size: 20px;
+  }
+
+  .app-header p {
+    font-size: 13px;
+  }
+
+  .header-user {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  main {
+    padding: 12px 8px;
   }
 }
 </style>

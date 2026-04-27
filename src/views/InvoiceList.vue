@@ -24,12 +24,12 @@
         </thead>
         <tbody>
           <tr v-for="invoice in invoices" :key="invoice.id" class="invoice-row">
-            <td>{{ invoice.invoiceNumber }}</td>
-            <td>{{ formatDate(invoice.invoiceDate) }}</td>
-            <td>{{ invoice.clientName }}</td>
-            <td class="amount">¥{{ invoice.total.toLocaleString() }}</td>
-            <td>{{ formatDateTime(invoice.createdAt) }}</td>
-            <td class="actions">
+            <td data-label="請求書番号">{{ invoice.invoiceNumber }}</td>
+            <td data-label="請求日">{{ formatDate(invoice.invoiceDate) }}</td>
+            <td data-label="顧客名">{{ invoice.clientName }}</td>
+            <td data-label="合計金額" class="amount">¥{{ invoice.total.toLocaleString() }}</td>
+            <td data-label="作成日">{{ formatDateTime(invoice.createdAt) }}</td>
+            <td data-label="操作" class="actions">
               <button @click="viewInvoice(invoice.id)" class="btn-view">詳細</button>
               <button @click="editInvoice(invoice.id)" class="btn-edit">編集</button>
               <button @click="deleteInvoice(invoice.id)" class="btn-delete">削除</button>
@@ -128,6 +128,10 @@ onMounted(() => {
   max-width: 1400px;
   margin: 0 auto;
   padding: 20px;
+}
+
+.invoice-list * {
+  box-sizing: border-box;
 }
 
 .list-header {
@@ -275,23 +279,119 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
+  .invoice-list {
+    padding: 12px;
+  }
+
   .list-header {
     flex-direction: column;
     gap: 15px;
-    align-items: flex-start;
+    align-items: stretch;
+    margin-bottom: 20px;
   }
 
-  .invoice-table {
-    font-size: 14px;
+  .btn-create {
+    width: 100%;
   }
 
-  .invoice-table th,
+  .invoice-table-container {
+    background: transparent;
+    box-shadow: none;
+    overflow-x: visible;
+  }
+
+  .invoice-table,
+  .invoice-table tbody,
+  .invoice-table tr,
   .invoice-table td {
-    padding: 10px 8px;
+    display: block;
+    width: 100%;
+  }
+
+  .invoice-table thead {
+    display: none;
+  }
+
+  .invoice-table tbody tr {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+    margin-bottom: 12px;
+    padding: 8px 12px;
+  }
+
+  .invoice-table tbody tr:hover {
+    background: white;
+  }
+
+  .invoice-table td {
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f3f5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    text-align: right;
+    word-break: break-word;
+  }
+
+  .invoice-table td:last-child {
+    border-bottom: none;
+  }
+
+  .invoice-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #2c3e50;
+    text-align: left;
+    flex-shrink: 0;
   }
 
   .invoice-table td.actions {
-    flex-direction: column;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .invoice-table td.actions::before {
+    width: 100%;
+    margin-bottom: 4px;
+  }
+
+  .btn-view,
+  .btn-edit,
+  .btn-delete {
+    flex: 1;
+    min-width: 72px;
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .invoice-list {
+    padding: 8px;
+  }
+
+  .list-header h2 {
+    font-size: 20px;
+  }
+
+  .empty-state {
+    padding: 48px 16px;
+  }
+
+  .empty-state p {
+    font-size: 16px;
+  }
+
+  .btn-create-large {
+    width: 100%;
+    padding: 14px 20px;
+    font-size: 16px;
   }
 }
 </style>
