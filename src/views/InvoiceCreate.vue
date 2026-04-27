@@ -75,33 +75,45 @@
         <span class="col-actions"></span>
       </div>
       <div v-for="(item, index) in invoice.items" :key="item.id" class="item-row">
-        <select
-          :value="item.description"
-          class="col-desc"
-          @change="onPresetChange(index, ($event.target as HTMLSelectElement).value)"
-        >
-          <option value="">選択してください</option>
-          <option v-for="preset in ITEM_PRESETS" :key="preset.description" :value="preset.description">
-            {{ preset.description }}
-          </option>
-        </select>
-        <input
-          v-model.number="item.quantity"
-          type="number"
-          min="0"
-          step="1"
-          class="col-qty"
-          @input="updateItem(index)"
-        />
-        <span class="col-unit">{{ item.unit }}</span>
-        <input
-          v-model.number="item.unitPrice"
-          type="number"
-          step="1"
-          class="col-price"
-          @input="updateItem(index)"
-        />
-        <span class="col-amount">¥{{ item.amount.toLocaleString() }}</span>
+        <div class="item-cell col-desc">
+          <span class="item-label">品名</span>
+          <select
+            :value="item.description"
+            @change="onPresetChange(index, ($event.target as HTMLSelectElement).value)"
+          >
+            <option value="">選択してください</option>
+            <option v-for="preset in ITEM_PRESETS" :key="preset.description" :value="preset.description">
+              {{ preset.description }}
+            </option>
+          </select>
+        </div>
+        <div class="item-cell col-qty">
+          <span class="item-label">数量</span>
+          <input
+            v-model.number="item.quantity"
+            type="number"
+            min="0"
+            step="1"
+            @input="updateItem(index)"
+          />
+        </div>
+        <div class="item-cell col-unit">
+          <span class="item-label">単位</span>
+          <span class="unit-value">{{ item.unit || '-' }}</span>
+        </div>
+        <div class="item-cell col-price">
+          <span class="item-label">単価</span>
+          <input
+            v-model.number="item.unitPrice"
+            type="number"
+            step="1"
+            @input="updateItem(index)"
+          />
+        </div>
+        <div class="item-cell col-amount">
+          <span class="item-label">金額</span>
+          <span class="amount-value">¥{{ item.amount.toLocaleString() }}</span>
+        </div>
         <button @click="removeItem(index)" class="btn-remove col-actions">削除</button>
       </div>
       <button @click="addItem" class="btn-add">+ 明細を追加</button>
@@ -277,6 +289,10 @@ const saveInvoice = () => {
   padding: 20px;
 }
 
+.invoice-form * {
+  box-sizing: border-box;
+}
+
 .form-header {
   display: flex;
   justify-content: space-between;
@@ -407,8 +423,13 @@ h3 {
   border-radius: 4px;
 }
 
-.item-row input,
-.item-row select {
+.item-cell {
+  min-width: 0;
+}
+
+.item-cell input,
+.item-cell select {
+  width: 100%;
   padding: 8px;
   border: 1px solid #ddd;
   border-radius: 4px;
@@ -416,15 +437,31 @@ h3 {
   background: white;
 }
 
-.col-desc { width: 100%; }
-.col-qty { width: 100%; text-align: center; }
-.col-unit { width: 100%; text-align: center; color: #555; }
-.col-price { width: 100%; text-align: right; }
-.col-amount { 
-  width: 100%; 
+.item-label {
+  display: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 4px;
+}
+
+.col-desc { min-width: 0; }
+.col-qty { text-align: center; }
+.col-qty input { text-align: center; }
+.col-unit { text-align: center; color: #555; }
+.col-unit .unit-value { display: block; }
+.col-price { text-align: right; }
+.col-price input { text-align: right; }
+.col-amount {
   text-align: right;
   font-weight: 600;
   padding-right: 10px;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.col-amount .amount-value {
+  display: block;
 }
 
 .btn-remove {
@@ -481,10 +518,25 @@ h3 {
 }
 
 @media (max-width: 768px) {
+  .invoice-form {
+    padding: 12px;
+  }
+
   .form-header {
     flex-direction: column;
-    gap: 15px;
+    gap: 12px;
     align-items: stretch;
+    padding: 16px;
+  }
+
+  .form-header h2 {
+    text-align: center;
+    font-size: 20px;
+  }
+
+  .btn-back {
+    width: 100%;
+    padding: 12px;
   }
 
   .header-actions {
@@ -493,15 +545,83 @@ h3 {
 
   .btn-save {
     width: 100%;
+    padding: 12px;
   }
 
-  .items-header,
+  .form-section {
+    padding: 16px;
+  }
+
+  .form-group input,
+  .form-group textarea,
+  .item-cell input,
+  .item-cell select {
+    font-size: 16px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .items-header {
+    display: none;
+  }
+
   .item-row {
     grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 14px;
   }
-  
+
+  .item-label {
+    display: block;
+  }
+
+  .col-qty,
+  .col-unit,
+  .col-price,
   .col-amount {
     text-align: left;
+    padding-right: 0;
+  }
+
+  .col-qty input,
+  .col-price input {
+    text-align: left;
+  }
+
+  .btn-remove {
+    margin-top: 4px;
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .btn-add {
+    width: 100%;
+  }
+
+  .total-row {
+    font-size: 15px;
+  }
+
+  .total-final {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .invoice-form {
+    padding: 8px;
+  }
+
+  .form-header,
+  .form-section {
+    padding: 14px;
+  }
+
+  h3 {
+    font-size: 16px;
   }
 }
 </style>

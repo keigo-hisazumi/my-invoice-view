@@ -68,30 +68,39 @@
         <span class="col-actions"></span>
       </div>
       <div v-for="(item, index) in invoice.items" :key="item.id" class="item-row">
-        <input 
-          v-model="item.description" 
-          type="text" 
-          placeholder="商品名" 
-          class="col-desc"
-          @input="updateItem(index)"
-        />
-        <input 
-          v-model.number="item.quantity" 
-          type="number" 
-          min="0" 
-          step="1"
-          class="col-qty"
-          @input="updateItem(index)"
-        />
-        <input 
-          v-model.number="item.unitPrice" 
-          type="number" 
-          min="0" 
-          step="0.01"
-          class="col-price"
-          @input="updateItem(index)"
-        />
-        <span class="col-amount">¥{{ item.amount.toLocaleString() }}</span>
+        <div class="item-cell col-desc">
+          <span class="item-label">品名</span>
+          <input
+            v-model="item.description"
+            type="text"
+            placeholder="商品名"
+            @input="updateItem(index)"
+          />
+        </div>
+        <div class="item-cell col-qty">
+          <span class="item-label">数量</span>
+          <input
+            v-model.number="item.quantity"
+            type="number"
+            min="0"
+            step="1"
+            @input="updateItem(index)"
+          />
+        </div>
+        <div class="item-cell col-price">
+          <span class="item-label">単価</span>
+          <input
+            v-model.number="item.unitPrice"
+            type="number"
+            min="0"
+            step="0.01"
+            @input="updateItem(index)"
+          />
+        </div>
+        <div class="item-cell col-amount">
+          <span class="item-label">金額</span>
+          <span class="amount-value">¥{{ item.amount.toLocaleString() }}</span>
+        </div>
         <button @click="removeItem(index)" class="btn-remove col-actions">削除</button>
       </div>
       <button @click="addItem" class="btn-add">+ 明細を追加</button>
@@ -211,6 +220,10 @@ calculateTotals()
   padding: 20px;
 }
 
+.invoice-form * {
+  box-sizing: border-box;
+}
+
 h2 {
   color: #2c3e50;
   margin-bottom: 30px;
@@ -289,21 +302,41 @@ h3 {
   border-radius: 4px;
 }
 
-.item-row input {
+.item-cell {
+  min-width: 0;
+}
+
+.item-cell input {
+  width: 100%;
   padding: 8px;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 14px;
 }
 
-.col-desc { width: 100%; }
-.col-qty { width: 100%; text-align: center; }
-.col-price { width: 100%; text-align: right; }
-.col-amount { 
-  width: 100%; 
+.item-label {
+  display: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 4px;
+}
+
+.col-desc { min-width: 0; }
+.col-qty { text-align: center; }
+.col-qty input { text-align: center; }
+.col-price { text-align: right; }
+.col-price input { text-align: right; }
+.col-amount {
   text-align: right;
   font-weight: 600;
   padding-right: 10px;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.col-amount .amount-value {
+  display: block;
 }
 
 .btn-remove {
@@ -360,13 +393,86 @@ h3 {
 }
 
 @media (max-width: 768px) {
-  .items-header,
+  .invoice-form {
+    padding: 12px;
+  }
+
+  .form-section {
+    padding: 16px;
+  }
+
+  .form-group input,
+  .form-group textarea,
+  .item-cell input {
+    font-size: 16px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .items-header {
+    display: none;
+  }
+
   .item-row {
     grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 14px;
   }
-  
+
+  .item-label {
+    display: block;
+  }
+
+  .col-qty,
+  .col-price,
   .col-amount {
     text-align: left;
+    padding-right: 0;
+  }
+
+  .col-qty input,
+  .col-price input {
+    text-align: left;
+  }
+
+  .btn-remove {
+    margin-top: 4px;
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .btn-add {
+    width: 100%;
+  }
+
+  .total-row {
+    font-size: 15px;
+  }
+
+  .total-final {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .invoice-form {
+    padding: 8px;
+  }
+
+  .form-section {
+    padding: 14px;
+  }
+
+  h2 {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+
+  h3 {
+    font-size: 16px;
   }
 }
 </style>
