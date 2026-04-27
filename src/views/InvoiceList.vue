@@ -2,7 +2,10 @@
   <div class="invoice-list">
     <div class="list-header">
       <h2>請求書一覧</h2>
-      <button @click="goToCreate" class="btn-create">+ 新規作成</button>
+      <div class="header-actions">
+        <button @click="goToBillingAddresses" class="btn-secondary">請求先管理</button>
+        <button @click="goToCreate" class="btn-create">+ 新規作成</button>
+      </div>
     </div>
 
     <div v-if="invoices.length === 0" class="empty-state">
@@ -76,6 +79,11 @@ const goToCreate = () => {
   router.push('/create')
 }
 
+// 請求先管理画面へ遷移
+const goToBillingAddresses = () => {
+  router.push('/billing-addresses')
+}
+
 // 詳細表示
 const viewInvoice = (id: string) => {
   router.push(`/view/${id}`)
@@ -146,6 +154,11 @@ onMounted(() => {
   margin: 0;
 }
 
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
 .btn-create {
   padding: 12px 24px;
   background: #27ae60;
@@ -160,6 +173,22 @@ onMounted(() => {
 
 .btn-create:hover {
   background: #229954;
+}
+
+.btn-secondary {
+  padding: 12px 24px;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: background 0.3s;
+}
+
+.btn-secondary:hover {
+  background: #2980b9;
 }
 
 .empty-state {
@@ -290,7 +319,13 @@ onMounted(() => {
     margin-bottom: 20px;
   }
 
-  .btn-create {
+  .header-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .btn-create,
+  .btn-secondary {
     width: 100%;
   }
 

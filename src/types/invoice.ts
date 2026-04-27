@@ -70,3 +70,17 @@ export interface InvoiceListItem {
   total: number
   createdAt: string
 }
+
+// 請求先データの型定義
+export interface BillingAddress {
+  id: string
+  name: string             // 請求先名（会社名・お客様名）
+  contactPerson: string    // 担当者名
+  postalCode: string       // 郵便番号
+  address: string          // 住所
+  phone: string            // 電話番号
+  email: string            // メールアドレス
+  notes: string            // 備考
+  createdAt: string        // 作成日時
+  updatedAt: string        // 更新日時
+}
