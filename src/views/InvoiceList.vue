@@ -3,6 +3,7 @@
     <div class="list-header">
       <h2>請求書一覧</h2>
       <div class="header-actions">
+        <button @click="goToBillingSources" class="btn-secondary">請求元管理</button>
         <button @click="goToBillingAddresses" class="btn-secondary">請求先管理</button>
         <button @click="goToCreate" class="btn-create">+ 新規作成</button>
       </div>
@@ -77,6 +78,11 @@ const loadInvoices = () => {
 // 新規作成画面へ遷移
 const goToCreate = () => {
   router.push('/create')
+}
+
+// 請求元管理画面へ遷移
+const goToBillingSources = () => {
+  router.push('/billing-sources')
 }
 
 // 請求先管理画面へ遷移
