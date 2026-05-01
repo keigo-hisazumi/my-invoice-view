@@ -84,3 +84,22 @@ export interface BillingAddress {
   createdAt: string        // 作成日時
   updatedAt: string        // 更新日時
 }
+
+// 請求元データの型定義
+export interface BillingSource {
+  id: string
+  name: string                  // 会社名・屋号
+  postalCode: string            // 郵便番号
+  address: string               // 住所
+  phone: string                 // 電話番号
+  email: string                 // メールアドレス
+  invoiceRegistrationNumber: string  // インボイス登録番号
+  bankName: string              // 銀行名
+  bankBranch: string            // 支店名
+  bankAccountType: string       // 口座種別
+  bankAccountNumber: string     // 口座番号
+  bankAccountHolder: string     // 口座名義
+  notes: string                 // 備考
+  createdAt: string             // 作成日時
+  updatedAt: string             // 更新日時
+}

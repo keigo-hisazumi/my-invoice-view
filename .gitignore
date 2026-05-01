@@ -11,6 +11,8 @@ node_modules
 dist
 dist-ssr
 *.local
+src/**/*.js
+src/**/*.vue.js
 
 # Editor directories and files
 .vscode/*

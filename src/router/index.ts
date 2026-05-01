@@ -4,6 +4,8 @@ import InvoiceCreate from '../views/InvoiceCreate.vue'
 import Login from '../views/Login.vue'
 import BillingAddressList from '../views/BillingAddressList.vue'
 import BillingAddressForm from '../views/BillingAddressForm.vue'
+import BillingSourceList from '../views/BillingSourceList.vue'
+import BillingSourceForm from '../views/BillingSourceForm.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -55,6 +57,24 @@ const router = createRouter({
       name: 'billing-address-edit',
       component: BillingAddressForm,
       meta: { title: '請求先編集' }
+    },
+    {
+      path: '/billing-sources',
+      name: 'billing-source-list',
+      component: BillingSourceList,
+      meta: { title: '請求元一覧' }
+    },
+    {
+      path: '/billing-sources/create',
+      name: 'billing-source-create',
+      component: BillingSourceForm,
+      meta: { title: '請求元追加' }
+    },
+    {
+      path: '/billing-sources/edit/:id',
+      name: 'billing-source-edit',
+      component: BillingSourceForm,
+      meta: { title: '請求元編集' }
     }
   ]
 })
