@@ -5,6 +5,7 @@
       <div class="header-actions">
         <button @click="goToBillingSources" class="btn-secondary">請求元管理</button>
         <button @click="goToBillingAddresses" class="btn-secondary">請求先管理</button>
+        <button @click="goToItems" class="btn-secondary">品目管理</button>
         <button @click="goToCreate" class="btn-create">+ 新規作成</button>
       </div>
     </div>
@@ -88,6 +89,11 @@ const goToBillingSources = () => {
 // 請求先管理画面へ遷移
 const goToBillingAddresses = () => {
   router.push('/billing-addresses')
+}
+
+// 品目管理画面へ遷移
+const goToItems = () => {
+  router.push('/items')
 }
 
 // 詳細表示
