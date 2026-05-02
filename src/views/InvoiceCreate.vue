@@ -29,37 +29,69 @@
     <div class="form-section">
       <h3>請求先情報</h3>
       <div class="form-group">
-        <label>お客様名</label>
-        <input v-model="invoice.clientName" type="text" placeholder="株式会社〇〇" />
+        <label>お客様名 <span class="required">*</span></label>
+        <select @change="onBillingAddressChange" class="form-select">
+          <option value="">-- 選択してください --</option>
+          <option v-for="address in billingAddresses" :key="address.id" :value="address.id">
+            {{ address.name }} {{ address.contactPerson ? `(${address.contactPerson})` : '' }}
+          </option>
+        </select>
       </div>
-      <div class="form-group">
-        <label>お客様住所</label>
-        <input v-model="invoice.clientAddress" type="text" placeholder="東京都〇〇区..." />
-      </div>
-      <div class="form-group">
-        <label>お客様電話番号</label>
-        <input v-model="invoice.clientPhone" type="tel" placeholder="03-1234-5678" />
+      <div v-if="selectedBillingAddress" class="billing-info-display">
+        <div class="info-row">
+          <span class="label">会社名:</span>
+          <span class="value">{{ selectedBillingAddress.name }}</span>
+        </div>
+        <div v-if="selectedBillingAddress.contactPerson" class="info-row">
+          <span class="label">担当者:</span>
+          <span class="value">{{ selectedBillingAddress.contactPerson }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">住所:</span>
+          <span class="value">{{ selectedBillingAddress.postalCode ? `〒${selectedBillingAddress.postalCode} ` : '' }}{{ selectedBillingAddress.address }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">電話番号:</span>
+          <span class="value">{{ selectedBillingAddress.phone }}</span>
+        </div>
+        <div v-if="selectedBillingAddress.email" class="info-row">
+          <span class="label">メールアドレス:</span>
+          <span class="value">{{ selectedBillingAddress.email }}</span>
+        </div>
       </div>
     </div>
 
     <div class="form-section">
       <h3>請求元情報</h3>
       <div class="form-group">
-        <label>会社名</label>
-        <input v-model="invoice.companyName" type="text" placeholder="あなたの会社名" />
+        <label>会社名 <span class="required">*</span></label>
+        <select @change="onBillingSourceChange" class="form-select">
+          <option value="">-- 選択してください --</option>
+          <option v-for="source in billingSources" :key="source.id" :value="source.id">
+            {{ source.name }}
+          </option>
+        </select>
       </div>
-      <div class="form-group">
-        <label>会社住所</label>
-        <input v-model="invoice.companyAddress" type="text" placeholder="東京都..." />
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>会社電話番号</label>
-          <input v-model="invoice.companyPhone" type="tel" placeholder="03-1234-5678" />
+      <div v-if="selectedBillingSource" class="billing-info-display">
+        <div class="info-row">
+          <span class="label">会社名:</span>
+          <span class="value">{{ selectedBillingSource.name }}</span>
         </div>
-        <div class="form-group">
-          <label>メールアドレス</label>
-          <input v-model="invoice.companyEmail" type="email" placeholder="info@example.com" />
+        <div class="info-row">
+          <span class="label">住所:</span>
+          <span class="value">{{ selectedBillingSource.postalCode ? `〒${selectedBillingSource.postalCode} ` : '' }}{{ selectedBillingSource.address }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">電話番号:</span>
+          <span class="value">{{ selectedBillingSource.phone }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">メールアドレス:</span>
+          <span class="value">{{ selectedBillingSource.email }}</span>
+        </div>
+        <div v-if="selectedBillingSource.invoiceRegistrationNumber" class="info-row">
+          <span class="label">インボイス登録番号:</span>
+          <span class="value">{{ selectedBillingSource.invoiceRegistrationNumber }}</span>
         </div>
       </div>
     </div>
@@ -153,21 +185,25 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive, ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import type { InvoiceData } from '../types/invoice'
+import type { InvoiceData, BillingAddress, BillingSource } from '../types/invoice'
 import { ITEM_PRESETS } from '../types/invoice'
 
 const router = useRouter()
+const billingAddresses = ref<BillingAddress[]>([])
+const billingSources = ref<BillingSource[]>([])
 
 // 請求書データの初期化
 const invoice = reactive<InvoiceData>({
   invoiceNumber: '',
   invoiceDate: new Date().toISOString().split('T')[0] || '',
   dueDate: '',
+  billingAddressId: undefined,
   clientName: '',
   clientAddress: '',
   clientPhone: '',
+  billingSourceId: undefined,
   companyName: '',
   companyAddress: '',
   companyPhone: '',
@@ -188,6 +224,44 @@ const invoice = reactive<InvoiceData>({
   total: 0,
   notes: ''
 })
+
+const loadBillingData = () => {
+  const addressesStored = localStorage.getItem('billingAddresses')
+  if (addressesStored) {
+    try {
+      billingAddresses.value = JSON.parse(addressesStored)
+    } catch (e) {
+      console.error('Failed to load billing addresses:', e)
+      billingAddresses.value = []
+    }
+  }
+
+  const sourcesStored = localStorage.getItem('billingSources')
+  if (sourcesStored) {
+    try {
+      billingSources.value = JSON.parse(sourcesStored)
+    } catch (e) {
+      console.error('Failed to load billing sources:', e)
+      billingSources.value = []
+    }
+  }
+}
+
+const selectedBillingAddress = computed(() => {
+  return invoice.billingAddressId ? billingAddresses.value.find(a => a.id === invoice.billingAddressId) : null
+})
+
+const selectedBillingSource = computed(() => {
+  return invoice.billingSourceId ? billingSources.value.find(s => s.id === invoice.billingSourceId) : null
+})
+
+const onBillingAddressChange = (e: Event) => {
+  invoice.billingAddressId = (e.target as HTMLSelectElement).value
+}
+
+const onBillingSourceChange = (e: Event) => {
+  invoice.billingSourceId = (e.target as HTMLSelectElement).value
+}
 
 // 明細行を追加
 const addItem = () => {
@@ -245,6 +319,11 @@ const calculateTotals = () => {
 // 初期計算
 calculateTotals()
 
+// マウント時に請求先・請求元データを読み込む
+onMounted(() => {
+  loadBillingData()
+})
+
 // 一覧に戻る
 const goBack = () => {
   router.push('/')
@@ -257,8 +336,12 @@ const saveInvoice = () => {
     alert('請求書番号を入力してください')
     return
   }
-  if (!invoice.clientName) {
-    alert('お客様名を入力してください')
+  if (!invoice.billingAddressId) {
+    alert('請求先を選択してください')
+    return
+  }
+  if (!invoice.billingSourceId) {
+    alert('請求元を選択してください')
     return
   }
 
@@ -385,7 +468,8 @@ h3 {
 }
 
 .form-group input,
-.form-group textarea {
+.form-group textarea,
+.form-select {
   width: 100%;
   padding: 10px;
   border: 1px solid #ddd;
@@ -395,9 +479,50 @@ h3 {
 }
 
 .form-group input:focus,
-.form-group textarea:focus {
+.form-group textarea:focus,
+.form-select:focus {
   outline: none;
   border-color: #3498db;
+}
+
+.form-select {
+  background-color: white;
+  cursor: pointer;
+}
+
+.required {
+  color: #e74c3c;
+  margin-left: 4px;
+}
+
+.billing-info-display {
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 15px;
+  margin-top: 10px;
+}
+
+.info-row {
+  display: flex;
+  padding: 8px 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-row .label {
+  font-weight: 500;
+  color: #555;
+  min-width: 120px;
+  flex-shrink: 0;
+}
+
+.info-row .value {
+  color: #2c3e50;
+  word-break: break-word;
 }
 
 .items-header {
