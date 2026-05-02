@@ -29,6 +29,15 @@
     <div class="form-section">
       <h3>請求先情報</h3>
       <div class="form-group">
+        <label>登録済み請求先から選択</label>
+        <select @change="onBillingAddressChange" class="form-select">
+          <option value="">-- 登録済み請求先がない場合は手動入力してください --</option>
+          <option v-for="address in billingAddresses" :key="address.id" :value="address.id">
+            {{ address.name }} {{ address.contactPerson ? `(${address.contactPerson})` : '' }}
+          </option>
+        </select>
+      </div>
+      <div class="form-group">
         <label>お客様名</label>
         <input v-model="invoice.clientName" type="text" placeholder="株式会社〇〇" />
       </div>
@@ -44,6 +53,15 @@
 
     <div class="form-section">
       <h3>請求元情報</h3>
+      <div class="form-group">
+        <label>登録済み請求元から選択</label>
+        <select @change="onBillingSourceChange" class="form-select">
+          <option value="">-- 登録済み請求元がない場合は手動入力してください --</option>
+          <option v-for="source in billingSources" :key="source.id" :value="source.id">
+            {{ source.name }}
+          </option>
+        </select>
+      </div>
       <div class="form-group">
         <label>会社名</label>
         <input v-model="invoice.companyName" type="text" placeholder="あなたの会社名" />
@@ -153,21 +171,25 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import type { InvoiceData } from '../types/invoice'
+import type { InvoiceData, BillingAddress, BillingSource } from '../types/invoice'
 import { ITEM_PRESETS } from '../types/invoice'
 
 const router = useRouter()
+const billingAddresses = ref<BillingAddress[]>([])
+const billingSources = ref<BillingSource[]>([])
 
 // 請求書データの初期化
 const invoice = reactive<InvoiceData>({
   invoiceNumber: '',
   invoiceDate: new Date().toISOString().split('T')[0] || '',
   dueDate: '',
+  billingAddressId: '',
   clientName: '',
   clientAddress: '',
   clientPhone: '',
+  billingSourceId: '',
   companyName: '',
   companyAddress: '',
   companyPhone: '',
@@ -188,6 +210,55 @@ const invoice = reactive<InvoiceData>({
   total: 0,
   notes: ''
 })
+
+const loadBillingData = () => {
+  const addressesStored = localStorage.getItem('billingAddresses')
+  if (addressesStored) {
+    try {
+      billingAddresses.value = JSON.parse(addressesStored)
+    } catch (e) {
+      console.error('Failed to load billing addresses:', e)
+      billingAddresses.value = []
+    }
+  }
+
+  const sourcesStored = localStorage.getItem('billingSources')
+  if (sourcesStored) {
+    try {
+      billingSources.value = JSON.parse(sourcesStored)
+    } catch (e) {
+      console.error('Failed to load billing sources:', e)
+      billingSources.value = []
+    }
+  }
+}
+
+const onBillingAddressChange = (e: Event) => {
+  const addressId = (e.target as HTMLSelectElement).value
+  if (addressId) {
+    invoice.billingAddressId = addressId
+    const address = billingAddresses.value.find(a => a.id === addressId)
+    if (address) {
+      invoice.clientName = address.name
+      invoice.clientAddress = address.postalCode ? `〒${address.postalCode} ${address.address}` : address.address
+      invoice.clientPhone = address.phone
+    }
+  }
+}
+
+const onBillingSourceChange = (e: Event) => {
+  const sourceId = (e.target as HTMLSelectElement).value
+  if (sourceId) {
+    invoice.billingSourceId = sourceId
+    const source = billingSources.value.find(s => s.id === sourceId)
+    if (source) {
+      invoice.companyName = source.name
+      invoice.companyAddress = source.postalCode ? `〒${source.postalCode} ${source.address}` : source.address
+      invoice.companyPhone = source.phone
+      invoice.companyEmail = source.email
+    }
+  }
+}
 
 // 明細行を追加
 const addItem = () => {
@@ -244,6 +315,11 @@ const calculateTotals = () => {
 
 // 初期計算
 calculateTotals()
+
+// マウント時に請求先・請求元データを読み込む
+onMounted(() => {
+  loadBillingData()
+})
 
 // 一覧に戻る
 const goBack = () => {
@@ -385,7 +461,8 @@ h3 {
 }
 
 .form-group input,
-.form-group textarea {
+.form-group textarea,
+.form-select {
   width: 100%;
   padding: 10px;
   border: 1px solid #ddd;
@@ -395,9 +472,15 @@ h3 {
 }
 
 .form-group input:focus,
-.form-group textarea:focus {
+.form-group textarea:focus,
+.form-select:focus {
   outline: none;
   border-color: #3498db;
+}
+
+.form-select {
+  background-color: white;
+  cursor: pointer;
 }
 
 .items-header {
