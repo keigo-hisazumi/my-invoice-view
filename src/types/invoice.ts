@@ -73,6 +73,17 @@ export interface InvoiceListItem {
   createdAt: string
 }
 
+// 品目マスタの型定義
+export interface ItemMaster {
+  id: string
+  description: string  // 品名
+  unitPrice: number    // 単価
+  unit: string         // 単位
+  notes: string        // 備考
+  createdAt: string    // 作成日時
+  updatedAt: string    // 更新日時
+}
+
 // 請求先データの型定義
 export interface BillingAddress {
   id: string

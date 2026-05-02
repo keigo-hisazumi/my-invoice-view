@@ -110,12 +110,12 @@
         <div class="item-cell col-desc">
           <span class="item-label">品名</span>
           <select
-            :value="item.description"
+            :value="getItemMasterId(item.description)"
             @change="onPresetChange(index, ($event.target as HTMLSelectElement).value)"
           >
             <option value="">選択してください</option>
-            <option v-for="preset in ITEM_PRESETS" :key="preset.description" :value="preset.description">
-              {{ preset.description }}
+            <option v-for="master in itemMasters" :key="master.id" :value="master.id">
+              {{ master.description }}
             </option>
           </select>
         </div>
@@ -187,12 +187,12 @@
 <script setup lang="ts">
 import { reactive, ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import type { InvoiceData, BillingAddress, BillingSource } from '../types/invoice'
-import { ITEM_PRESETS } from '../types/invoice'
+import type { InvoiceData, BillingAddress, BillingSource, ItemMaster } from '../types/invoice'
 
 const router = useRouter()
 const billingAddresses = ref<BillingAddress[]>([])
 const billingSources = ref<BillingSource[]>([])
+const itemMasters = ref<ItemMaster[]>([])
 
 // 請求書データの初期化
 const invoice = reactive<InvoiceData>({
@@ -245,6 +245,16 @@ const loadBillingData = () => {
       billingSources.value = []
     }
   }
+
+  const itemsStored = localStorage.getItem('itemMasters')
+  if (itemsStored) {
+    try {
+      itemMasters.value = JSON.parse(itemsStored)
+    } catch (e) {
+      console.error('Failed to load item masters:', e)
+      itemMasters.value = []
+    }
+  }
 }
 
 const selectedBillingAddress = computed(() => {
@@ -275,15 +285,21 @@ const addItem = () => {
   })
 }
 
+// 品名からマスタIDを逆引き（セレクトボックスのvalue設定用）
+const getItemMasterId = (description: string): string => {
+  const master = itemMasters.value.find(m => m.description === description)
+  return master ? master.id : ''
+}
+
 // プリセット選択時の処理
-const onPresetChange = (index: number, description: string) => {
+const onPresetChange = (index: number, itemMasterId: string) => {
   const item = invoice.items[index]
   if (!item) return
-  const preset = ITEM_PRESETS.find(p => p.description === description)
-  if (preset) {
-    item.description = preset.description
-    item.unitPrice = preset.unitPrice
-    item.unit = preset.unit
+  const master = itemMasters.value.find(m => m.id === itemMasterId)
+  if (master) {
+    item.description = master.description
+    item.unitPrice = master.unitPrice
+    item.unit = master.unit
   } else {
     item.description = ''
     item.unitPrice = 0

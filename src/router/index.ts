@@ -6,6 +6,8 @@ import BillingAddressList from '../views/BillingAddressList.vue'
 import BillingAddressForm from '../views/BillingAddressForm.vue'
 import BillingSourceList from '../views/BillingSourceList.vue'
 import BillingSourceForm from '../views/BillingSourceForm.vue'
+import ItemMasterList from '../views/ItemMasterList.vue'
+import ItemMasterForm from '../views/ItemMasterForm.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -75,6 +77,24 @@ const router = createRouter({
       name: 'billing-source-edit',
       component: BillingSourceForm,
       meta: { title: '請求元編集' }
+    },
+    {
+      path: '/items',
+      name: 'item-master-list',
+      component: ItemMasterList,
+      meta: { title: '品目管理' }
+    },
+    {
+      path: '/items/create',
+      name: 'item-master-create',
+      component: ItemMasterForm,
+      meta: { title: '品目追加' }
+    },
+    {
+      path: '/items/edit/:id',
+      name: 'item-master-edit',
+      component: ItemMasterForm,
+      meta: { title: '品目編集' }
     }
   ]
 })
