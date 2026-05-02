@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import InvoiceList from '../views/InvoiceList.vue'
 import InvoiceCreate from '../views/InvoiceCreate.vue'
+import InvoicePrint from '../views/InvoicePrint.vue'
 import Login from '../views/Login.vue'
 import BillingAddressList from '../views/BillingAddressList.vue'
 import BillingAddressForm from '../views/BillingAddressForm.vue'
@@ -41,6 +42,12 @@ const router = createRouter({
       name: 'invoice-view',
       component: InvoiceCreate,
       meta: { title: '請求書詳細' }
+    },
+    {
+      path: '/print/:id',
+      name: 'invoice-print',
+      component: InvoicePrint,
+      meta: { title: '請求書印刷' }
     },
     {
       path: '/billing-addresses',
