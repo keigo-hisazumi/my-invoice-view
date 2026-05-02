@@ -215,24 +215,12 @@ const downloadPdf = async () => {
     const pageHeight = pdf.internal.pageSize.getHeight()
     const ratio = canvas.height / canvas.width
     const imgHeight = pageWidth * ratio
+    // 縦に収まらない場合は縮小して1ページに収める
     if (imgHeight <= pageHeight) {
       pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, imgHeight)
     } else {
-      // 複数ページに分割
-      let yOffset = 0
-      while (yOffset < canvas.height) {
-        const sliceHeight = Math.min(canvas.height - yOffset, (canvas.width * pageHeight) / pageWidth)
-        const sliceCanvas = document.createElement('canvas')
-        sliceCanvas.width = canvas.width
-        sliceCanvas.height = sliceHeight
-        const ctx = sliceCanvas.getContext('2d')!
-        ctx.fillStyle = '#ffffff'
-        ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height)
-        ctx.drawImage(canvas, 0, -yOffset)
-        pdf.addImage(sliceCanvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pageWidth, pageHeight)
-        yOffset += sliceHeight
-        if (yOffset < canvas.height) pdf.addPage()
-      }
+      const scaledWidth = pageHeight / ratio
+      pdf.addImage(imgData, 'JPEG', 0, 0, scaledWidth, pageHeight)
     }
     const fileName = `請求書_${invoice.value.invoiceNumber || invoiceId.value}.pdf`
     pdf.save(fileName)
