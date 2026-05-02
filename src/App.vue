@@ -92,6 +92,7 @@ const handleLogout = () => {
   display: flex;
   align-items: center;
   gap: 12px;
+  margin-left: auto;
 }
 
 .user-name {
