@@ -79,7 +79,6 @@ export interface ItemMaster {
   description: string  // 品名
   unitPrice: number    // 単価
   unit: string         // 単位
-  notes: string        // 備考
   createdAt: string    // 作成日時
   updatedAt: string    // 更新日時
 }

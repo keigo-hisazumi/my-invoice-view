@@ -18,7 +18,6 @@
             <th>品名</th>
             <th>単価</th>
             <th>単位</th>
-            <th>備考</th>
             <th>操作</th>
           </tr>
         </thead>
@@ -27,7 +26,6 @@
             <td data-label="品名" class="name">{{ item.description }}</td>
             <td data-label="単価" class="price">¥{{ item.unitPrice.toLocaleString() }}</td>
             <td data-label="単位">{{ item.unit || '-' }}</td>
-            <td data-label="備考">{{ item.notes || '-' }}</td>
             <td data-label="操作" class="actions">
               <button @click="editItem(item.id)" class="btn-edit">編集</button>
               <button @click="deleteItem(item.id)" class="btn-delete">削除</button>

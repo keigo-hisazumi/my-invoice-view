@@ -26,12 +26,6 @@
       </div>
     </div>
 
-    <div class="form-section">
-      <h3>備考</h3>
-      <div class="form-group">
-        <textarea v-model="item.notes" rows="4" placeholder="特記事項があればご記入ください"></textarea>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -57,7 +51,6 @@ const item = reactive<ItemMaster>({
   description: '',
   unitPrice: 0,
   unit: '',
-  notes: '',
   createdAt: '',
   updatedAt: ''
 })
