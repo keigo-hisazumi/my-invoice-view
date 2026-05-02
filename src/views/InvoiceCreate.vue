@@ -181,6 +181,10 @@
         <textarea v-model="invoice.notes" rows="4" placeholder="特記事項があればご記入ください"></textarea>
       </div>
     </div>
+
+    <div class="form-footer">
+      <button @click="saveInvoice" class="btn-save btn-save-footer">保存</button>
+    </div>
   </div>
 </template>
 
@@ -195,10 +199,13 @@ const billingSources = ref<BillingSource[]>([])
 const itemMasters = ref<ItemMaster[]>([])
 
 // 請求書データの初期化
+const oneMonthLater = new Date()
+oneMonthLater.setMonth(oneMonthLater.getMonth() + 1)
+
 const invoice = reactive<InvoiceData>({
   invoiceNumber: '',
   invoiceDate: new Date().toISOString().split('T')[0] || '',
-  dueDate: '',
+  dueDate: oneMonthLater.toISOString().split('T')[0] || '',
   billingAddressId: undefined,
   clientName: '',
   clientAddress: '',
@@ -658,6 +665,18 @@ h3 {
   padding-top: 15px;
 }
 
+.form-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+  margin-bottom: 30px;
+}
+
+.btn-save-footer {
+  padding: 14px 40px;
+  font-size: 16px;
+}
+
 @media (max-width: 768px) {
   .invoice-form {
     padding: 12px;
@@ -687,6 +706,14 @@ h3 {
   .btn-save {
     width: 100%;
     padding: 12px;
+  }
+
+  .form-footer {
+    justify-content: stretch;
+  }
+
+  .btn-save-footer {
+    width: 100%;
   }
 
   .form-section {
