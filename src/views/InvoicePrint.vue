@@ -1,11 +1,13 @@
 <template>
   <div class="print-wrapper">
-    <div class="screen-only print-controls">
-      <button @click="window.print()" class="btn-print">印刷 / PDF出力</button>
+    <div class="print-controls">
+      <button @click="downloadPdf" :disabled="isGenerating" class="btn-print">
+        {{ isGenerating ? 'PDF生成中...' : 'PDFをダウンロード' }}
+      </button>
       <button @click="goBack" class="btn-back">← 詳細に戻る</button>
     </div>
 
-    <div class="invoice-page">
+    <div ref="invoicePageRef" class="invoice-page">
       <!-- ヘッダー右側：日付・請求書番号 -->
       <div class="invoice-meta">
         <div class="meta-row">{{ formatDate(invoice.invoiceDate) }}</div>
@@ -101,12 +103,14 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { InvoiceData, BillingAddress, BillingSource } from '../types/invoice'
+import jsPDF from 'jspdf'
+import html2canvas from 'html2canvas'
 
 const route = useRoute()
 const router = useRouter()
 const invoiceId = computed(() => route.params.id as string)
-
-const window = globalThis.window
+const isGenerating = ref(false)
+const invoicePageRef = ref<HTMLElement | null>(null)
 
 const invoice = ref<InvoiceData>({
   invoiceNumber: '',
@@ -194,6 +198,45 @@ const loadData = () => {
 
 const goBack = () => {
   router.push(`/view/${invoiceId.value}`)
+}
+
+const downloadPdf = async () => {
+  if (!invoicePageRef.value) return
+  isGenerating.value = true
+  try {
+    const canvas = await html2canvas(invoicePageRef.value, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff'
+    })
+    const imgData = canvas.toDataURL('image/png')
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+    const pageWidth = pdf.internal.pageSize.getWidth()
+    const pageHeight = pdf.internal.pageSize.getHeight()
+    const ratio = canvas.height / canvas.width
+    const imgHeight = pageWidth * ratio
+    if (imgHeight <= pageHeight) {
+      pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, imgHeight)
+    } else {
+      // 複数ページに分割
+      let yOffset = 0
+      while (yOffset < canvas.height) {
+        const sliceHeight = Math.min(canvas.height - yOffset, (canvas.width * pageHeight) / pageWidth)
+        const sliceCanvas = document.createElement('canvas')
+        sliceCanvas.width = canvas.width
+        sliceCanvas.height = sliceHeight
+        const ctx = sliceCanvas.getContext('2d')!
+        ctx.drawImage(canvas, 0, -yOffset)
+        pdf.addImage(sliceCanvas.toDataURL('image/png'), 'PNG', 0, 0, pageWidth, pageHeight)
+        yOffset += sliceHeight
+        if (yOffset < canvas.height) pdf.addPage()
+      }
+    }
+    const fileName = `請求書_${invoice.value.invoiceNumber || invoiceId.value}.pdf`
+    pdf.save(fileName)
+  } finally {
+    isGenerating.value = false
+  }
 }
 
 onMounted(() => {
@@ -479,28 +522,8 @@ onMounted(() => {
   color: #444;
 }
 
-/* 印刷時のスタイル */
-@media print {
-  .screen-only {
-    display: none !important;
-  }
-
-  .print-wrapper {
-    background: white;
-    padding: 0;
-  }
-
-  .invoice-page {
-    box-shadow: none;
-    margin: 0;
-    padding: 15mm 18mm;
-    width: 100%;
-    min-height: auto;
-  }
-
-  @page {
-    size: A4;
-    margin: 0;
-  }
+.btn-print:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>
