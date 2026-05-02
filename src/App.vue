@@ -63,11 +63,15 @@ const handleLogout = () => {
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
+  position: relative;
 }
 
 .header-text {
   text-align: center;
-  flex: 1;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
   min-width: 0;
 }
 
@@ -88,6 +92,7 @@ const handleLogout = () => {
   display: flex;
   align-items: center;
   gap: 12px;
+  margin-left: auto;
 }
 
 .user-name {
@@ -123,6 +128,13 @@ main {
   .header-inner {
     flex-direction: column;
     gap: 12px;
+    position: static;
+  }
+
+  .header-text {
+    position: static;
+    transform: none;
+    width: auto;
   }
 
   .app-header h1 {
