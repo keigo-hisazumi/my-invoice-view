@@ -209,28 +209,18 @@ const downloadPdf = async () => {
       useCORS: true,
       backgroundColor: '#ffffff'
     })
-    const imgData = canvas.toDataURL('image/png')
+    const imgData = canvas.toDataURL('image/jpeg', 0.95)
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
     const pageWidth = pdf.internal.pageSize.getWidth()
     const pageHeight = pdf.internal.pageSize.getHeight()
     const ratio = canvas.height / canvas.width
     const imgHeight = pageWidth * ratio
+    // 縦に収まらない場合は縮小して1ページに収める
     if (imgHeight <= pageHeight) {
-      pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, imgHeight)
+      pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, imgHeight)
     } else {
-      // 複数ページに分割
-      let yOffset = 0
-      while (yOffset < canvas.height) {
-        const sliceHeight = Math.min(canvas.height - yOffset, (canvas.width * pageHeight) / pageWidth)
-        const sliceCanvas = document.createElement('canvas')
-        sliceCanvas.width = canvas.width
-        sliceCanvas.height = sliceHeight
-        const ctx = sliceCanvas.getContext('2d')!
-        ctx.drawImage(canvas, 0, -yOffset)
-        pdf.addImage(sliceCanvas.toDataURL('image/png'), 'PNG', 0, 0, pageWidth, pageHeight)
-        yOffset += sliceHeight
-        if (yOffset < canvas.height) pdf.addPage()
-      }
+      const scaledWidth = pageHeight / ratio
+      pdf.addImage(imgData, 'JPEG', 0, 0, scaledWidth, pageHeight)
     }
     const fileName = `請求書_${invoice.value.invoiceNumber || invoiceId.value}.pdf`
     pdf.save(fileName)
