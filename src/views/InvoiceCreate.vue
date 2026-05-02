@@ -2,9 +2,10 @@
   <div class="invoice-form">
     <div class="form-header">
       <button @click="goBack" class="btn-back">← 一覧に戻る</button>
-      <h2>請求書作成</h2>
+      <h2>{{ pageTitle }}</h2>
       <div class="header-actions">
-        <button @click="saveInvoice" class="btn-save">保存</button>
+        <button v-if="isViewMode" @click="goToEdit" class="btn-edit-header">編集</button>
+        <button v-if="!isViewMode" @click="saveInvoice" class="btn-save">保存</button>
       </div>
     </div>
     
@@ -13,15 +14,15 @@
       <div class="form-row">
         <div class="form-group">
           <label>請求書番号</label>
-          <input v-model="invoice.invoiceNumber" type="text" placeholder="INV-001" />
+          <input v-model="invoice.invoiceNumber" type="text" placeholder="INV-001" :readonly="isViewMode" :class="{ 'readonly-field': isViewMode }" />
         </div>
         <div class="form-group">
           <label>請求日</label>
-          <input v-model="invoice.invoiceDate" type="date" />
+          <input v-model="invoice.invoiceDate" type="date" :readonly="isViewMode" :class="{ 'readonly-field': isViewMode }" />
         </div>
         <div class="form-group">
           <label>支払期限</label>
-          <input v-model="invoice.dueDate" type="date" />
+          <input v-model="invoice.dueDate" type="date" :readonly="isViewMode" :class="{ 'readonly-field': isViewMode }" />
         </div>
       </div>
     </div>
@@ -29,13 +30,14 @@
     <div class="form-section">
       <h3>請求先情報</h3>
       <div class="form-group">
-        <label>お客様名 <span class="required">*</span></label>
-        <select @change="onBillingAddressChange" class="form-select">
+        <label>お客様名 <span v-if="!isViewMode" class="required">*</span></label>
+        <select v-if="!isViewMode" @change="onBillingAddressChange" class="form-select" :value="invoice.billingAddressId">
           <option value="">-- 選択してください --</option>
           <option v-for="address in billingAddresses" :key="address.id" :value="address.id">
             {{ address.name }} {{ address.contactPerson ? `(${address.contactPerson})` : '' }}
           </option>
         </select>
+        <input v-else :value="selectedBillingAddress?.name || invoice.clientName" type="text" readonly class="readonly-field" />
       </div>
       <div v-if="selectedBillingAddress" class="billing-info-display">
         <div class="info-row">
@@ -64,13 +66,14 @@
     <div class="form-section">
       <h3>請求元情報</h3>
       <div class="form-group">
-        <label>会社名 <span class="required">*</span></label>
-        <select @change="onBillingSourceChange" class="form-select">
+        <label>会社名 <span v-if="!isViewMode" class="required">*</span></label>
+        <select v-if="!isViewMode" @change="onBillingSourceChange" class="form-select" :value="invoice.billingSourceId">
           <option value="">-- 選択してください --</option>
           <option v-for="source in billingSources" :key="source.id" :value="source.id">
             {{ source.name }}
           </option>
         </select>
+        <input v-else :value="selectedBillingSource?.name || invoice.companyName" type="text" readonly class="readonly-field" />
       </div>
       <div v-if="selectedBillingSource" class="billing-info-display">
         <div class="info-row">
@@ -110,6 +113,7 @@
         <div class="item-cell col-desc">
           <span class="item-label">品名</span>
           <select
+            v-if="!isViewMode"
             :value="getItemMasterId(item.description)"
             @change="onPresetChange(index, ($event.target as HTMLSelectElement).value)"
           >
@@ -118,16 +122,19 @@
               {{ master.description }}
             </option>
           </select>
+          <span v-else class="readonly-value">{{ item.description || '-' }}</span>
         </div>
         <div class="item-cell col-qty">
           <span class="item-label">数量</span>
           <input
+            v-if="!isViewMode"
             v-model.number="item.quantity"
             type="number"
             min="0"
             step="1"
             @input="updateItem(index)"
           />
+          <span v-else class="readonly-value">{{ item.quantity }}</span>
         </div>
         <div class="item-cell col-unit">
           <span class="item-label">単位</span>
@@ -136,19 +143,22 @@
         <div class="item-cell col-price">
           <span class="item-label">単価</span>
           <input
+            v-if="!isViewMode"
             v-model.number="item.unitPrice"
             type="number"
             step="1"
             @input="updateItem(index)"
           />
+          <span v-else class="readonly-value">¥{{ item.unitPrice.toLocaleString() }}</span>
         </div>
         <div class="item-cell col-amount">
           <span class="item-label">金額</span>
           <span class="amount-value">¥{{ item.amount.toLocaleString() }}</span>
         </div>
-        <button @click="removeItem(index)" class="btn-remove col-actions">削除</button>
+        <button v-if="!isViewMode" @click="removeItem(index)" class="btn-remove col-actions">削除</button>
+        <span v-else class="col-actions"></span>
       </div>
-      <button @click="addItem" class="btn-add">+ 明細を追加</button>
+      <button v-if="!isViewMode" @click="addItem" class="btn-add">+ 明細を追加</button>
     </div>
 
     <div class="form-section">
@@ -156,7 +166,8 @@
       <div class="form-row">
         <div class="form-group">
           <label>消費税率 (%)</label>
-          <input v-model.number="invoice.taxRate" type="number" min="0" max="100" step="0.1" @input="calculateTotals" />
+          <input v-if="!isViewMode" v-model.number="invoice.taxRate" type="number" min="0" max="100" step="0.1" @input="calculateTotals" />
+          <input v-else :value="invoice.taxRate" type="number" readonly class="readonly-field" />
         </div>
       </div>
       <div class="totals">
@@ -178,11 +189,12 @@
     <div class="form-section">
       <h3>備考</h3>
       <div class="form-group">
-        <textarea v-model="invoice.notes" rows="4" placeholder="特記事項があればご記入ください"></textarea>
+        <textarea v-if="!isViewMode" v-model="invoice.notes" rows="4" placeholder="特記事項があればご記入ください"></textarea>
+        <textarea v-else :value="invoice.notes" rows="4" readonly class="readonly-field"></textarea>
       </div>
     </div>
 
-    <div class="form-footer">
+    <div v-if="!isViewMode" class="form-footer">
       <button @click="saveInvoice" class="btn-save btn-save-footer">保存</button>
     </div>
   </div>
@@ -190,13 +202,24 @@
 
 <script setup lang="ts">
 import { reactive, ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import type { InvoiceData, BillingAddress, BillingSource, ItemMaster } from '../types/invoice'
 
 const router = useRouter()
+const route = useRoute()
 const billingAddresses = ref<BillingAddress[]>([])
 const billingSources = ref<BillingSource[]>([])
 const itemMasters = ref<ItemMaster[]>([])
+
+const isViewMode = computed(() => route.name === 'invoice-view')
+const isEditMode = computed(() => route.name === 'invoice-edit')
+const invoiceId = computed(() => route.params.id as string | undefined)
+
+const pageTitle = computed(() => {
+  if (isViewMode.value) return '請求書詳細'
+  if (isEditMode.value) return '請求書編集'
+  return '請求書作成'
+})
 
 // 請求書データの初期化
 const oneMonthLater = new Date()
@@ -342,14 +365,35 @@ const calculateTotals = () => {
 // 初期計算
 calculateTotals()
 
+const loadInvoice = (id: string) => {
+  const stored = localStorage.getItem('invoices')
+  if (!stored) return
+  try {
+    const invoices: (InvoiceData & { id: string })[] = JSON.parse(stored)
+    const found = invoices.find(inv => inv.id === id)
+    if (!found) return
+    Object.assign(invoice, found)
+  } catch (e) {
+    console.error('Failed to load invoice:', e)
+  }
+}
+
 // マウント時に請求先・請求元データを読み込む
 onMounted(() => {
   loadBillingData()
+  if ((isViewMode.value || isEditMode.value) && invoiceId.value) {
+    loadInvoice(invoiceId.value)
+  }
 })
 
 // 一覧に戻る
 const goBack = () => {
   router.push('/')
+}
+
+// 詳細から編集画面へ遷移
+const goToEdit = () => {
+  router.push(`/edit/${invoiceId.value}`)
 }
 
 // 保存
@@ -368,21 +412,30 @@ const saveInvoice = () => {
     return
   }
 
-  // IDと作成日時を追加
-  const invoiceToSave = {
-    ...invoice,
-    id: crypto.randomUUID(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+  const stored = localStorage.getItem('invoices')
+  const invoices: (InvoiceData & { id: string })[] = stored ? JSON.parse(stored) : []
+
+  if (isEditMode.value && invoiceId.value) {
+    // 既存請求書を更新
+    const idx = invoices.findIndex(inv => inv.id === invoiceId.value)
+    if (idx !== -1) {
+      invoices[idx] = { ...invoice, id: invoiceId.value, updatedAt: new Date().toISOString() }
+    }
+    localStorage.setItem('invoices', JSON.stringify(invoices))
+    alert('請求書を更新しました')
+  } else {
+    // 新規作成
+    const invoiceToSave = {
+      ...invoice,
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+    invoices.push(invoiceToSave)
+    localStorage.setItem('invoices', JSON.stringify(invoices))
+    alert('請求書を保存しました')
   }
 
-  // ローカルストレージに保存
-  const stored = localStorage.getItem('invoices')
-  const invoices = stored ? JSON.parse(stored) : []
-  invoices.push(invoiceToSave)
-  localStorage.setItem('invoices', JSON.stringify(invoices))
-
-  alert('請求書を保存しました')
   router.push('/')
 }
 
@@ -428,6 +481,38 @@ const saveInvoice = () => {
 
 .btn-back:hover {
   background: #7f8c8d;
+}
+
+.btn-edit-header {
+  padding: 10px 24px;
+  background: #f39c12;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: background 0.3s;
+}
+
+.btn-edit-header:hover {
+  background: #e67e22;
+}
+
+.readonly-field {
+  background: #f8f9fa !important;
+  color: #555;
+  cursor: default;
+}
+
+.readonly-value {
+  display: block;
+  padding: 8px;
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #2c3e50;
 }
 
 .header-actions {
