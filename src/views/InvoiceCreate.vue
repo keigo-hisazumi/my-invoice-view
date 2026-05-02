@@ -4,6 +4,7 @@
       <button @click="goBack" class="btn-back">← 一覧に戻る</button>
       <h2>{{ pageTitle }}</h2>
       <div class="header-actions">
+        <button v-if="isViewMode" @click="goToPrint" class="btn-pdf">PDF出力</button>
         <button v-if="isViewMode" @click="goToEdit" class="btn-edit-header">編集</button>
         <button v-if="!isViewMode" @click="saveInvoice" class="btn-save">保存</button>
       </div>
@@ -396,6 +397,11 @@ const goToEdit = () => {
   router.push(`/edit/${invoiceId.value}`)
 }
 
+// PDF出力画面へ遷移
+const goToPrint = () => {
+  router.push(`/print/${invoiceId.value}`)
+}
+
 // 保存
 const saveInvoice = () => {
   // バリデーション
@@ -497,6 +503,22 @@ const saveInvoice = () => {
 
 .btn-edit-header:hover {
   background: #e67e22;
+}
+
+.btn-pdf {
+  padding: 10px 24px;
+  background: #2980b9;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: background 0.3s;
+}
+
+.btn-pdf:hover {
+  background: #2471a3;
 }
 
 .readonly-field {
