@@ -209,14 +209,14 @@ const downloadPdf = async () => {
       useCORS: true,
       backgroundColor: '#ffffff'
     })
-    const imgData = canvas.toDataURL('image/png')
+    const imgData = canvas.toDataURL('image/jpeg', 0.95)
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
     const pageWidth = pdf.internal.pageSize.getWidth()
     const pageHeight = pdf.internal.pageSize.getHeight()
     const ratio = canvas.height / canvas.width
     const imgHeight = pageWidth * ratio
     if (imgHeight <= pageHeight) {
-      pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, imgHeight)
+      pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, imgHeight)
     } else {
       // 複数ページに分割
       let yOffset = 0
@@ -226,8 +226,10 @@ const downloadPdf = async () => {
         sliceCanvas.width = canvas.width
         sliceCanvas.height = sliceHeight
         const ctx = sliceCanvas.getContext('2d')!
+        ctx.fillStyle = '#ffffff'
+        ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height)
         ctx.drawImage(canvas, 0, -yOffset)
-        pdf.addImage(sliceCanvas.toDataURL('image/png'), 'PNG', 0, 0, pageWidth, pageHeight)
+        pdf.addImage(sliceCanvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, pageWidth, pageHeight)
         yOffset += sliceHeight
         if (yOffset < canvas.height) pdf.addPage()
       }
