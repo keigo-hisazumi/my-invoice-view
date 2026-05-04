@@ -9,7 +9,7 @@
         <button v-if="!isViewMode" @click="saveInvoice" class="btn-save">保存</button>
       </div>
     </div>
-    
+
     <div class="form-section">
       <h3>基本情報</h3>
       <div class="form-row">
@@ -150,11 +150,11 @@
             step="1"
             @input="updateItem(index)"
           />
-          <span v-else class="readonly-value">¥{{ item.unitPrice.toLocaleString() }}</span>
+          <span v-else class="readonly-value">￥{{ item.unitPrice.toLocaleString() }}</span>
         </div>
         <div class="item-cell col-amount">
           <span class="item-label">金額</span>
-          <span class="amount-value">¥{{ item.amount.toLocaleString() }}</span>
+          <span class="amount-value">￥{{ item.amount.toLocaleString() }}</span>
         </div>
         <button v-if="!isViewMode" @click="removeItem(index)" class="btn-remove col-actions">削除</button>
         <span v-else class="col-actions"></span>
@@ -174,15 +174,15 @@
       <div class="totals">
         <div class="total-row">
           <span>小計:</span>
-          <span>¥{{ invoice.subtotal.toLocaleString() }}</span>
+          <span>￥{{ invoice.subtotal.toLocaleString() }}</span>
         </div>
         <div class="total-row">
           <span>消費税 ({{ invoice.taxRate }}%):</span>
-          <span>¥{{ invoice.tax.toLocaleString() }}</span>
+          <span>￥{{ invoice.tax.toLocaleString() }}</span>
         </div>
         <div class="total-row total-final">
           <span>合計:</span>
-          <span>¥{{ invoice.total.toLocaleString() }}</span>
+          <span>￥{{ invoice.total.toLocaleString() }}</span>
         </div>
       </div>
     </div>
@@ -204,6 +204,10 @@
 <script setup lang="ts">
 import { reactive, ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import {
+  collection, query, where, getDocs, getDoc, addDoc, updateDoc, doc, serverTimestamp
+} from 'firebase/firestore'
+import { db, auth } from '../firebase'
 import type { InvoiceData, BillingAddress, BillingSource, ItemMaster } from '../types/invoice'
 
 const router = useRouter()
@@ -222,7 +226,6 @@ const pageTitle = computed(() => {
   return '請求書作成'
 })
 
-// 請求書データの初期化
 const oneMonthLater = new Date()
 oneMonthLater.setMonth(oneMonthLater.getMonth() + 1)
 
@@ -256,45 +259,28 @@ const invoice = reactive<InvoiceData>({
   notes: ''
 })
 
-const loadBillingData = () => {
-  const addressesStored = localStorage.getItem('billingAddresses')
-  if (addressesStored) {
-    try {
-      billingAddresses.value = JSON.parse(addressesStored)
-    } catch (e) {
-      console.error('Failed to load billing addresses:', e)
-      billingAddresses.value = []
-    }
-  }
+const loadBillingData = async () => {
+  const uid = auth.currentUser?.uid
+  if (!uid) return
 
-  const sourcesStored = localStorage.getItem('billingSources')
-  if (sourcesStored) {
-    try {
-      billingSources.value = JSON.parse(sourcesStored)
-    } catch (e) {
-      console.error('Failed to load billing sources:', e)
-      billingSources.value = []
-    }
-  }
+  const [addrSnap, srcSnap, itemSnap] = await Promise.all([
+    getDocs(query(collection(db, 'invoiceBillingAddresses'), where('uid', '==', uid))),
+    getDocs(query(collection(db, 'invoiceBillingSources'), where('uid', '==', uid))),
+    getDocs(query(collection(db, 'invoiceItemMasters'), where('uid', '==', uid)))
+  ])
 
-  const itemsStored = localStorage.getItem('itemMasters')
-  if (itemsStored) {
-    try {
-      itemMasters.value = JSON.parse(itemsStored)
-    } catch (e) {
-      console.error('Failed to load item masters:', e)
-      itemMasters.value = []
-    }
-  }
+  billingAddresses.value = addrSnap.docs.map(d => ({ id: d.id, ...d.data() } as BillingAddress))
+  billingSources.value = srcSnap.docs.map(d => ({ id: d.id, ...d.data() } as BillingSource))
+  itemMasters.value = itemSnap.docs.map(d => ({ id: d.id, ...d.data() } as ItemMaster))
 }
 
-const selectedBillingAddress = computed(() => {
-  return invoice.billingAddressId ? billingAddresses.value.find(a => a.id === invoice.billingAddressId) : null
-})
+const selectedBillingAddress = computed(() =>
+  invoice.billingAddressId ? billingAddresses.value.find(a => a.id === invoice.billingAddressId) : null
+)
 
-const selectedBillingSource = computed(() => {
-  return invoice.billingSourceId ? billingSources.value.find(s => s.id === invoice.billingSourceId) : null
-})
+const selectedBillingSource = computed(() =>
+  invoice.billingSourceId ? billingSources.value.find(s => s.id === invoice.billingSourceId) : null
+)
 
 const onBillingAddressChange = (e: Event) => {
   invoice.billingAddressId = (e.target as HTMLSelectElement).value
@@ -304,7 +290,6 @@ const onBillingSourceChange = (e: Event) => {
   invoice.billingSourceId = (e.target as HTMLSelectElement).value
 }
 
-// 明細行を追加
 const addItem = () => {
   invoice.items.push({
     id: crypto.randomUUID(),
@@ -316,13 +301,11 @@ const addItem = () => {
   })
 }
 
-// 品名からマスタIDを逆引き（セレクトボックスのvalue設定用）
 const getItemMasterId = (description: string): string => {
   const master = itemMasters.value.find(m => m.description === description)
   return master ? master.id : ''
 }
 
-// プリセット選択時の処理
 const onPresetChange = (index: number, itemMasterId: string) => {
   const item = invoice.items[index]
   if (!item) return
@@ -339,7 +322,6 @@ const onPresetChange = (index: number, itemMasterId: string) => {
   updateItem(index)
 }
 
-// 明細行を削除
 const removeItem = (index: number) => {
   if (invoice.items.length > 1) {
     invoice.items.splice(index, 1)
@@ -347,7 +329,6 @@ const removeItem = (index: number) => {
   }
 }
 
-// 明細の金額を更新
 const updateItem = (index: number) => {
   const item = invoice.items[index]
   if (item) {
@@ -356,55 +337,37 @@ const updateItem = (index: number) => {
   }
 }
 
-// 合計金額を計算
 const calculateTotals = () => {
   invoice.subtotal = invoice.items.reduce((sum, item) => sum + item.amount, 0)
   invoice.tax = Math.round(invoice.subtotal * invoice.taxRate / 100)
   invoice.total = invoice.subtotal + invoice.tax
 }
 
-// 初期計算
 calculateTotals()
 
-const loadInvoice = (id: string) => {
-  const stored = localStorage.getItem('invoices')
-  if (!stored) return
-  try {
-    const invoices: (InvoiceData & { id: string })[] = JSON.parse(stored)
-    const found = invoices.find(inv => inv.id === id)
-    if (!found) return
-    Object.assign(invoice, found)
-  } catch (e) {
-    console.error('Failed to load invoice:', e)
-  }
+const loadInvoice = async (id: string) => {
+  const docSnap = await getDoc(doc(db, 'invoiceInvoices', id))
+  if (!docSnap.exists()) return
+  const data = docSnap.data()
+  Object.assign(invoice, {
+    ...data,
+    createdAt: data.createdAt?.toDate?.()?.toISOString() ?? data.createdAt,
+    updatedAt: data.updatedAt?.toDate?.()?.toISOString() ?? data.updatedAt
+  })
 }
 
-// マウント時に請求先・請求元データを読み込む
-onMounted(() => {
-  loadBillingData()
+onMounted(async () => {
+  await loadBillingData()
   if ((isViewMode.value || isEditMode.value) && invoiceId.value) {
-    loadInvoice(invoiceId.value)
+    await loadInvoice(invoiceId.value)
   }
 })
 
-// 一覧に戻る
-const goBack = () => {
-  router.push('/')
-}
+const goBack = () => router.push('/')
+const goToEdit = () => router.push(`/edit/${invoiceId.value}`)
+const goToPrint = () => router.push(`/print/${invoiceId.value}`)
 
-// 詳細から編集画面へ遷移
-const goToEdit = () => {
-  router.push(`/edit/${invoiceId.value}`)
-}
-
-// PDF出力画面へ遷移
-const goToPrint = () => {
-  router.push(`/print/${invoiceId.value}`)
-}
-
-// 保存
-const saveInvoice = () => {
-  // バリデーション
+const saveInvoice = async () => {
   if (!invoice.invoiceNumber) {
     alert('請求書番号を入力してください')
     return
@@ -418,33 +381,31 @@ const saveInvoice = () => {
     return
   }
 
-  const stored = localStorage.getItem('invoices')
-  const invoices: (InvoiceData & { id: string })[] = stored ? JSON.parse(stored) : []
+  const uid = auth.currentUser?.uid
+  if (!uid) return
+
+  const clientName = selectedBillingAddress.value?.name ?? invoice.clientName
 
   if (isEditMode.value && invoiceId.value) {
-    // 既存請求書を更新
-    const idx = invoices.findIndex(inv => inv.id === invoiceId.value)
-    if (idx !== -1) {
-      invoices[idx] = { ...invoice, id: invoiceId.value, updatedAt: new Date().toISOString() }
-    }
-    localStorage.setItem('invoices', JSON.stringify(invoices))
+    await updateDoc(doc(db, 'invoiceInvoices', invoiceId.value), {
+      ...invoice,
+      clientName,
+      updatedAt: serverTimestamp()
+    })
     alert('請求書を更新しました')
   } else {
-    // 新規作成
-    const invoiceToSave = {
+    await addDoc(collection(db, 'invoiceInvoices'), {
       ...invoice,
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
-    invoices.push(invoiceToSave)
-    localStorage.setItem('invoices', JSON.stringify(invoices))
+      clientName,
+      uid,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    })
     alert('請求書を保存しました')
   }
 
   router.push('/')
 }
-
 </script>
 
 <style scoped>

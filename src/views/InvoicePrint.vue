@@ -8,7 +8,6 @@
     </div>
 
     <div ref="invoicePageRef" class="invoice-page">
-      <!-- ヘッダー右側：日付・請求書番号 -->
       <div class="invoice-meta">
         <div class="meta-row">{{ formatDate(invoice.invoiceDate) }}</div>
         <div class="meta-row">
@@ -17,12 +16,9 @@
         </div>
       </div>
 
-      <!-- タイトル -->
       <h1 class="invoice-title">請求書</h1>
 
-      <!-- 請求先・請求元の2カラム -->
       <div class="invoice-header-section">
-        <!-- 左：請求先 -->
         <div class="billing-address-col">
           <div class="client-name">
             <span class="client-name-text">{{ clientName }}</span>
@@ -33,11 +29,10 @@
 
           <div class="total-box">
             <span class="total-label">合計：</span>
-            <span class="total-amount">¥{{ invoice.total.toLocaleString() }}</span>
+            <span class="total-amount">￥{{ invoice.total.toLocaleString() }}</span>
           </div>
         </div>
 
-        <!-- 右：請求元 -->
         <div class="billing-source-col">
           <div v-if="source.postalCode" class="source-line">〒{{ source.postalCode }}</div>
           <div v-if="source.address" class="source-line">{{ source.address }}</div>
@@ -48,13 +43,11 @@
         </div>
       </div>
 
-      <!-- 支払期限 -->
       <div class="due-date-row">
         <span class="due-label">お支払期限：</span>
         <span class="due-value">{{ formatDate(invoice.dueDate) }}</span>
       </div>
 
-      <!-- 明細テーブル -->
       <table class="items-table">
         <thead>
           <tr>
@@ -68,22 +61,20 @@
           <tr v-for="item in filledItems" :key="item.id">
             <td class="col-desc">{{ item.description }}</td>
             <td class="col-qty">{{ item.description ? `${item.quantity} ${item.unit}` : '' }}</td>
-            <td class="col-price">{{ item.description ? `¥${item.unitPrice.toLocaleString()}` : '' }}</td>
-            <td class="col-amount">{{ item.description ? `¥${item.amount.toLocaleString()}` : '' }}</td>
+            <td class="col-price">{{ item.description ? `￥${item.unitPrice.toLocaleString()}` : '' }}</td>
+            <td class="col-amount">{{ item.description ? `￥${item.amount.toLocaleString()}` : '' }}</td>
           </tr>
           <tr class="total-row">
             <td colspan="3" class="total-label-cell">合計</td>
-            <td class="col-amount total-cell">¥{{ invoice.total.toLocaleString() }}</td>
+            <td class="col-amount total-cell">￥{{ invoice.total.toLocaleString() }}</td>
           </tr>
         </tbody>
       </table>
 
-      <!-- 備考 -->
       <div v-if="invoice.notes" class="notes-section">
         <p class="notes-text">{{ invoice.notes }}</p>
       </div>
 
-      <!-- 振込先 -->
       <div v-if="hasBankInfo" class="bank-box">
         <div class="bank-title">お振込先</div>
         <div v-if="source.bankName || source.bankBranch" class="bank-line">
@@ -93,7 +84,7 @@
           ({{ source.bankAccountType }}){{ source.bankAccountNumber }}
         </div>
         <div v-if="source.bankAccountHolder" class="bank-line">{{ source.bankAccountHolder }}</div>
-        <div class="bank-note">※恐れ入りますが、お振込手数料はご負担頂きますようお願い申し上げます。</div>
+        <div class="bank-note">※恐れ入りますが、お振込手数料はご負担頭きますようお願い申し上げます。</div>
       </div>
     </div>
   </div>
@@ -102,6 +93,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '../firebase'
 import type { InvoiceData, BillingAddress, BillingSource } from '../types/invoice'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
@@ -177,28 +170,24 @@ const formatDate = (dateStr: string) => {
   return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`
 }
 
-const loadData = () => {
-  const stored = localStorage.getItem('invoices')
-  if (!stored) return
-  try {
-    const invoices: (InvoiceData & { id: string })[] = JSON.parse(stored)
-    const found = invoices.find(inv => inv.id === invoiceId.value)
-    if (!found) return
-    invoice.value = found
+const loadData = async () => {
+  const invSnap = await getDoc(doc(db, 'invoiceInvoices', invoiceId.value))
+  if (!invSnap.exists()) return
+  const data = invSnap.data()
+  invoice.value = { ...data, id: invSnap.id } as InvoiceData
 
-    const addresses: BillingAddress[] = JSON.parse(localStorage.getItem('billingAddresses') || '[]')
-    billingAddress.value = addresses.find(a => a.id === found.billingAddressId) || null
+  if (data.billingAddressId) {
+    const addrSnap = await getDoc(doc(db, 'invoiceBillingAddresses', data.billingAddressId))
+    if (addrSnap.exists()) billingAddress.value = { id: addrSnap.id, ...addrSnap.data() } as BillingAddress
+  }
 
-    const sources: BillingSource[] = JSON.parse(localStorage.getItem('billingSources') || '[]')
-    billingSource.value = sources.find(s => s.id === found.billingSourceId) || null
-  } catch (e) {
-    console.error('請求書データの読み込みに失敗しました:', e)
+  if (data.billingSourceId) {
+    const srcSnap = await getDoc(doc(db, 'invoiceBillingSources', data.billingSourceId))
+    if (srcSnap.exists()) billingSource.value = { id: srcSnap.id, ...srcSnap.data() } as BillingSource
   }
 }
 
-const goBack = () => {
-  router.push(`/view/${invoiceId.value}`)
-}
+const goBack = () => router.push(`/view/${invoiceId.value}`)
 
 const downloadPdf = async () => {
   if (!invoicePageRef.value) return
@@ -215,7 +204,6 @@ const downloadPdf = async () => {
     const pageHeight = pdf.internal.pageSize.getHeight()
     const ratio = canvas.height / canvas.width
     const imgHeight = pageWidth * ratio
-    // 縦に収まらない場合は縮小して1ページに収める
     if (imgHeight <= pageHeight) {
       pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, imgHeight)
     } else {
@@ -279,7 +267,6 @@ onMounted(() => {
   background: #7f8c8d;
 }
 
-/* A4用紙エリア */
 .invoice-page {
   background: white;
   width: 210mm;
@@ -291,7 +278,6 @@ onMounted(() => {
   box-shadow: 0 2px 12px rgba(0,0,0,0.15);
 }
 
-/* メタ情報（右上） */
 .invoice-meta {
   text-align: right;
   font-size: 11pt;
@@ -313,7 +299,6 @@ onMounted(() => {
   min-width: 80px;
 }
 
-/* タイトル */
 .invoice-title {
   text-align: center;
   font-size: 26pt;
@@ -322,7 +307,6 @@ onMounted(() => {
   letter-spacing: 0.2em;
 }
 
-/* 請求先・請求元 2カラム */
 .invoice-header-section {
   display: flex;
   justify-content: space-between;
@@ -342,7 +326,6 @@ onMounted(() => {
   line-height: 1.9;
 }
 
-/* 請求先名 */
 .client-name {
   border-bottom: 1.5px solid #333;
   padding-bottom: 2px;
@@ -367,7 +350,6 @@ onMounted(() => {
   color: #333;
 }
 
-/* 合計ボックス */
 .total-box {
   display: inline-flex;
   align-items: baseline;
@@ -388,7 +370,6 @@ onMounted(() => {
   font-weight: bold;
 }
 
-/* 請求元情報 */
 .source-line {
   font-size: 10pt;
 }
@@ -399,7 +380,6 @@ onMounted(() => {
   margin-top: 1mm;
 }
 
-/* 支払期限 */
 .due-date-row {
   border-bottom: 1.5px solid #333;
   border-top: 1.5px solid #333;
@@ -414,7 +394,6 @@ onMounted(() => {
   font-weight: 600;
 }
 
-/* 明細テーブル */
 .items-table {
   width: 100%;
   border-collapse: collapse;
@@ -477,7 +456,6 @@ onMounted(() => {
   font-weight: bold;
 }
 
-/* 備考 */
 .notes-section {
   margin-bottom: 6mm;
 }
@@ -488,7 +466,6 @@ onMounted(() => {
   white-space: pre-wrap;
 }
 
-/* 振込先ボックス */
 .bank-box {
   border: 1px solid #555;
   padding: 8px 12px;
