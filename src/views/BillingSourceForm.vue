@@ -84,12 +84,12 @@
 <script setup lang="ts">
 import { reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { doc, getDoc, addDoc, updateDoc, collection, serverTimestamp } from 'firebase/firestore'
+import { db, auth } from '../firebase'
 import type { BillingSource } from '../types/invoice'
 
 const route = useRoute()
 const router = useRouter()
-
-const STORAGE_KEY = 'billingSources'
 
 const editId = computed(() => {
   const id = route.params.id
@@ -98,8 +98,7 @@ const editId = computed(() => {
 
 const isEdit = computed(() => editId.value !== '')
 
-const source = reactive<BillingSource>({
-  id: '',
+const source = reactive<Omit<BillingSource, 'id' | 'createdAt' | 'updatedAt'>>({
   name: '',
   postalCode: '',
   address: '',
@@ -111,75 +110,66 @@ const source = reactive<BillingSource>({
   bankAccountType: '',
   bankAccountNumber: '',
   bankAccountHolder: '',
-  notes: '',
-  createdAt: '',
-  updatedAt: ''
+  notes: ''
 })
 
-const loadAll = (): BillingSource[] => {
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (!stored) return []
-  try {
-    return JSON.parse(stored)
-  } catch (e) {
-    console.error('Failed to load billing sources:', e)
-    return []
-  }
-}
-
-const loadForEdit = () => {
-  const all = loadAll()
-  const found = all.find(s => s.id === editId.value)
-  if (!found) {
+const loadForEdit = async () => {
+  const docRef = doc(db, 'invoiceBillingSources', editId.value)
+  const docSnap = await getDoc(docRef)
+  if (!docSnap.exists()) {
     alert('指定された請求元が見つかりません')
     router.push('/billing-sources')
     return
   }
-  Object.assign(source, found)
+  const data = docSnap.data()
+  Object.assign(source, {
+    name: data.name ?? '',
+    postalCode: data.postalCode ?? '',
+    address: data.address ?? '',
+    phone: data.phone ?? '',
+    email: data.email ?? '',
+    invoiceRegistrationNumber: data.invoiceRegistrationNumber ?? '',
+    bankName: data.bankName ?? '',
+    bankBranch: data.bankBranch ?? '',
+    bankAccountType: data.bankAccountType ?? '',
+    bankAccountNumber: data.bankAccountNumber ?? '',
+    bankAccountHolder: data.bankAccountHolder ?? '',
+    notes: data.notes ?? ''
+  })
 }
 
-const goBack = () => {
-  router.push('/billing-sources')
-}
+const goBack = () => router.push('/billing-sources')
 
-const saveSource = () => {
+const saveSource = async () => {
   if (!source.name.trim()) {
     alert('会社名・屋号を入力してください')
     return
   }
 
-  const all = loadAll()
-  const now = new Date().toISOString()
+  const uid = auth.currentUser?.uid
+  if (!uid) return
 
   if (isEdit.value) {
-    const index = all.findIndex(s => s.id === editId.value)
-    if (index === -1) {
-      alert('編集対象が見つかりませんでした')
-      return
-    }
-    all[index] = {
+    await updateDoc(doc(db, 'invoiceBillingSources', editId.value), {
       ...source,
-      id: editId.value,
-      updatedAt: now
-    }
-  } else {
-    all.push({
-      ...source,
-      id: crypto.randomUUID(),
-      createdAt: now,
-      updatedAt: now
+      updatedAt: serverTimestamp()
     })
+    alert('請求元を更新しました')
+  } else {
+    await addDoc(collection(db, 'invoiceBillingSources'), {
+      ...source,
+      uid,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    })
+    alert('請求元を追加しました')
   }
 
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(all))
-  alert(isEdit.value ? '請求元を更新しました' : '請求元を追加しました')
   router.push('/billing-sources')
 }
 
 onMounted(() => {
-  if (isEdit.value) {
-    loadForEdit()
-  }
+  if (isEdit.value) loadForEdit()
 })
 </script>
 
