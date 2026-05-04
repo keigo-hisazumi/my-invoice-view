@@ -349,6 +349,11 @@ const loadInvoice = async (id: string) => {
   const docSnap = await getDoc(doc(db, 'invoiceInvoices', id))
   if (!docSnap.exists()) return
   const data = docSnap.data()
+  if (data.uid !== auth.currentUser?.uid) {
+    alert('アクセス権限がありません')
+    router.push('/')
+    return
+  }
   Object.assign(invoice, {
     ...data,
     createdAt: data.createdAt?.toDate?.()?.toISOString() ?? data.createdAt,
