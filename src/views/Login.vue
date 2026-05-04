@@ -1,18 +1,18 @@
 <template>
   <div class="login-container">
     <div class="login-card">
-      <h2 class="login-title">ログイン</h2>
+      <h2 class="login-title">{{ isRegisterMode ? '新規登録' : 'ログイン' }}</h2>
       <p class="login-subtitle">請求書作成システムへようこそ</p>
 
-      <form @submit.prevent="handleLogin" class="login-form">
+      <form @submit.prevent="handleSubmit" class="login-form">
         <div class="form-group">
-          <label for="username">ユーザー名</label>
+          <label for="email">メールアドレス</label>
           <input
-            id="username"
-            v-model="username"
-            type="text"
-            placeholder="user"
-            autocomplete="username"
+            id="email"
+            v-model="email"
+            type="email"
+            placeholder="example@example.com"
+            autocomplete="email"
             required
           />
         </div>
@@ -23,21 +23,24 @@
             id="password"
             v-model="password"
             type="password"
-            placeholder="password"
+            placeholder="6文字以上"
             autocomplete="current-password"
             required
           />
         </div>
 
-        <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
+        <p v-if="authError" class="error-message">{{ authError }}</p>
 
         <button type="submit" class="btn-login" :disabled="loading">
-          {{ loading ? 'ログイン中...' : 'ログイン' }}
+          {{ loading ? '処理中...' : isRegisterMode ? '新規登録' : 'ログイン' }}
         </button>
       </form>
 
-      <p class="login-hint">
-        ※ ダミー認証: ユーザー名 <code>user</code> / パスワード <code>password</code>
+      <p class="toggle-mode">
+        {{ isRegisterMode ? 'すでにアカウントをお持ちの方は' : '初めての方は' }}
+        <button type="button" class="btn-toggle" @click="isRegisterMode = !isRegisterMode">
+          {{ isRegisterMode ? 'ログイン' : '新規登録' }}
+        </button>
       </p>
     </div>
   </div>
@@ -46,32 +49,29 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useAuth } from '../composables/useAuth'
 
 const router = useRouter()
 const route = useRoute()
 
-const username = ref('')
+const email = ref('')
 const password = ref('')
-const errorMessage = ref('')
-const loading = ref(false)
+const isRegisterMode = ref(false)
 
-const DUMMY_USERNAME = 'user'
-const DUMMY_PASSWORD = 'password'
+const { login, register, authError, loading } = useAuth()
 
-const handleLogin = () => {
-  errorMessage.value = ''
-  loading.value = true
-
-  setTimeout(() => {
-    if (username.value === DUMMY_USERNAME && password.value === DUMMY_PASSWORD) {
-      localStorage.setItem('auth', JSON.stringify({ username: username.value, loggedInAt: new Date().toISOString() }))
-      const redirect = (route.query.redirect as string) || '/'
-      router.push(redirect)
+const handleSubmit = async () => {
+  try {
+    if (isRegisterMode.value) {
+      await register(email.value, password.value)
     } else {
-      errorMessage.value = 'ユーザー名またはパスワードが正しくありません'
-      loading.value = false
+      await login(email.value, password.value)
     }
-  }, 300)
+    const redirect = (route.query.redirect as string) || '/'
+    router.push(redirect)
+  } catch {
+    // authError is set by useAuth
+  }
 }
 </script>
 
@@ -170,18 +170,25 @@ const handleLogin = () => {
   cursor: not-allowed;
 }
 
-.login-hint {
-  margin: 24px 0 0;
+.toggle-mode {
+  margin: 20px 0 0;
   text-align: center;
   color: #888;
-  font-size: 12px;
+  font-size: 14px;
 }
 
-.login-hint code {
-  background: #f4f4f6;
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-family: 'Courier New', monospace;
-  color: #c0392b;
+.btn-toggle {
+  background: none;
+  border: none;
+  color: #667eea;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.btn-toggle:hover {
+  color: #764ba2;
 }
 </style>
