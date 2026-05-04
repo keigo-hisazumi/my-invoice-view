@@ -32,7 +32,7 @@
             <td data-label="請求書番号">{{ invoice.invoiceNumber }}</td>
             <td data-label="請求日">{{ formatDate(invoice.invoiceDate) }}</td>
             <td data-label="顧客名">{{ invoice.clientName }}</td>
-            <td data-label="合計金額" class="amount">¥{{ invoice.total.toLocaleString() }}</td>
+            <td data-label="合計金額" class="amount">￥{{ invoice.total.toLocaleString() }}</td>
             <td data-label="作成日">{{ formatDateTime(invoice.createdAt) }}</td>
             <td data-label="操作" class="actions">
               <button @click="viewInvoice(invoice.id)" class="btn-view">詳細</button>
@@ -47,100 +47,70 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { collection, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore'
+import { db, auth } from '../firebase'
 import type { InvoiceListItem } from '../types/invoice'
 
 const router = useRouter()
 const invoices = ref<InvoiceListItem[]>([])
+let unsubscribe: (() => void) | null = null
 
-// サンプルデータ（実際にはAPIから取得）
-const loadInvoices = () => {
-  // TODO: APIから請求書一覧を取得
-  // 現在はローカルストレージからロード
-  const stored = localStorage.getItem('invoices')
-  if (stored) {
-    try {
-      const allInvoices = JSON.parse(stored)
-      invoices.value = allInvoices.map((inv: any) => ({
-        id: inv.id,
-        invoiceNumber: inv.invoiceNumber,
-        invoiceDate: inv.invoiceDate,
-        clientName: inv.clientName,
-        total: inv.total,
-        createdAt: inv.createdAt
-      }))
-    } catch (e) {
-      console.error('Failed to load invoices:', e)
-    }
-  }
-}
+onMounted(() => {
+  const uid = auth.currentUser?.uid
+  if (!uid) return
 
-// 新規作成画面へ遷移
-const goToCreate = () => {
-  router.push('/create')
-}
+  const q = query(
+    collection(db, 'invoiceInvoices'),
+    where('uid', '==', uid)
+  )
 
-// 請求元管理画面へ遷移
-const goToBillingSources = () => {
-  router.push('/billing-sources')
-}
+  unsubscribe = onSnapshot(q, (snapshot) => {
+    invoices.value = snapshot.docs
+      .map(d => {
+        const data = d.data()
+        return {
+          id: d.id,
+          invoiceNumber: data.invoiceNumber,
+          invoiceDate: data.invoiceDate,
+          clientName: data.clientName,
+          total: data.total,
+          createdAt: data.createdAt?.toDate?.()?.toISOString() ?? data.createdAt ?? ''
+        } as InvoiceListItem
+      })
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  })
+})
 
-// 請求先管理画面へ遷移
-const goToBillingAddresses = () => {
-  router.push('/billing-addresses')
-}
+onUnmounted(() => {
+  if (unsubscribe) unsubscribe()
+})
 
-// 品目管理画面へ遷移
-const goToItems = () => {
-  router.push('/items')
-}
+const goToCreate = () => router.push('/create')
+const goToBillingSources = () => router.push('/billing-sources')
+const goToBillingAddresses = () => router.push('/billing-addresses')
+const goToItems = () => router.push('/items')
+const viewInvoice = (id: string) => router.push(`/view/${id}`)
+const editInvoice = (id: string) => router.push(`/edit/${id}`)
 
-// 詳細表示
-const viewInvoice = (id: string) => {
-  router.push(`/view/${id}`)
-}
-
-// 編集画面へ遷移
-const editInvoice = (id: string) => {
-  router.push(`/edit/${id}`)
-}
-
-// 削除
-const deleteInvoice = (id: string) => {
+const deleteInvoice = async (id: string) => {
   if (confirm('この請求書を削除してもよろしいですか？')) {
-    const stored = localStorage.getItem('invoices')
-    if (stored) {
-      try {
-        const allInvoices = JSON.parse(stored)
-        const filtered = allInvoices.filter((inv: any) => inv.id !== id)
-        localStorage.setItem('invoices', JSON.stringify(filtered))
-        loadInvoices()
-      } catch (e) {
-        console.error('Failed to delete invoice:', e)
-      }
-    }
+    await deleteDoc(doc(db, 'invoiceInvoices', id))
   }
 }
 
-// 日付フォーマット
 const formatDate = (dateStr: string) => {
   if (!dateStr) return ''
   const date = new Date(dateStr)
   return date.toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' })
 }
 
-// 日時フォーマット
 const formatDateTime = (dateStr: string) => {
   if (!dateStr) return ''
   const date = new Date(dateStr)
   return date.toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' })
 }
-
-// マウント時に一覧をロード
-onMounted(() => {
-  loadInvoices()
-})
 </script>
 
 <style scoped>

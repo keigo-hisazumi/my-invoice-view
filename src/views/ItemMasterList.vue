@@ -24,7 +24,7 @@
         <tbody>
           <tr v-for="item in items" :key="item.id" class="item-row">
             <td data-label="品名" class="name">{{ item.description }}</td>
-            <td data-label="単価" class="price">¥{{ item.unitPrice.toLocaleString() }}</td>
+            <td data-label="単価" class="price">￥{{ item.unitPrice.toLocaleString() }}</td>
             <td data-label="単位">{{ item.unit || '-' }}</td>
             <td data-label="操作" class="actions">
               <button @click="editItem(item.id)" class="btn-edit">編集</button>
@@ -38,52 +38,43 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { collection, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore'
+import { db, auth } from '../firebase'
 import type { ItemMaster } from '../types/invoice'
 
 const router = useRouter()
 const items = ref<ItemMaster[]>([])
-
-const STORAGE_KEY = 'itemMasters'
-
-const loadItems = () => {
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored) {
-    try {
-      items.value = JSON.parse(stored)
-    } catch (e) {
-      console.error('Failed to load item masters:', e)
-      items.value = []
-    }
-  } else {
-    items.value = []
-  }
-}
-
-const goToInvoices = () => {
-  router.push('/')
-}
-
-const goToCreate = () => {
-  router.push('/items/create')
-}
-
-const editItem = (id: string) => {
-  router.push(`/items/edit/${id}`)
-}
-
-const deleteItem = (id: string) => {
-  if (confirm('この品目を削除してもよろしいですか？')) {
-    const filtered = items.value.filter(i => i.id !== id)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered))
-    loadItems()
-  }
-}
+let unsubscribe: (() => void) | null = null
 
 onMounted(() => {
-  loadItems()
+  const uid = auth.currentUser?.uid
+  if (!uid) return
+
+  const q = query(
+    collection(db, 'invoiceItemMasters'),
+    where('uid', '==', uid)
+  )
+
+  unsubscribe = onSnapshot(q, (snapshot) => {
+    items.value = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ItemMaster))
+  })
 })
+
+onUnmounted(() => {
+  if (unsubscribe) unsubscribe()
+})
+
+const goToInvoices = () => router.push('/')
+const goToCreate = () => router.push('/items/create')
+const editItem = (id: string) => router.push(`/items/edit/${id}`)
+
+const deleteItem = async (id: string) => {
+  if (confirm('この品目を削除してもよろしいですか？')) {
+    await deleteDoc(doc(db, 'invoiceItemMasters', id))
+  }
+}
 </script>
 
 <style scoped>

@@ -45,52 +45,43 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { collection, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore'
+import { db, auth } from '../firebase'
 import type { BillingAddress } from '../types/invoice'
 
 const router = useRouter()
 const addresses = ref<BillingAddress[]>([])
-
-const STORAGE_KEY = 'billingAddresses'
-
-const loadAddresses = () => {
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored) {
-    try {
-      addresses.value = JSON.parse(stored)
-    } catch (e) {
-      console.error('Failed to load billing addresses:', e)
-      addresses.value = []
-    }
-  } else {
-    addresses.value = []
-  }
-}
-
-const goToInvoices = () => {
-  router.push('/')
-}
-
-const goToCreate = () => {
-  router.push('/billing-addresses/create')
-}
-
-const editAddress = (id: string) => {
-  router.push(`/billing-addresses/edit/${id}`)
-}
-
-const deleteAddress = (id: string) => {
-  if (confirm('この請求先を削除してもよろしいですか？')) {
-    const filtered = addresses.value.filter(a => a.id !== id)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered))
-    loadAddresses()
-  }
-}
+let unsubscribe: (() => void) | null = null
 
 onMounted(() => {
-  loadAddresses()
+  const uid = auth.currentUser?.uid
+  if (!uid) return
+
+  const q = query(
+    collection(db, 'invoiceBillingAddresses'),
+    where('uid', '==', uid)
+  )
+
+  unsubscribe = onSnapshot(q, (snapshot) => {
+    addresses.value = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as BillingAddress))
+  })
 })
+
+onUnmounted(() => {
+  if (unsubscribe) unsubscribe()
+})
+
+const goToInvoices = () => router.push('/')
+const goToCreate = () => router.push('/billing-addresses/create')
+const editAddress = (id: string) => router.push(`/billing-addresses/edit/${id}`)
+
+const deleteAddress = async (id: string) => {
+  if (confirm('この請求先を削除してもよろしいですか？')) {
+    await deleteDoc(doc(db, 'invoiceBillingAddresses', id))
+  }
+}
 </script>
 
 <style scoped>
