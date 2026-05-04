@@ -94,7 +94,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { doc, getDoc } from 'firebase/firestore'
-import { db } from '../firebase'
+import { db, auth } from '../firebase'
 import type { InvoiceData, BillingAddress, BillingSource } from '../types/invoice'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
@@ -174,6 +174,11 @@ const loadData = async () => {
   const invSnap = await getDoc(doc(db, 'invoiceInvoices', invoiceId.value))
   if (!invSnap.exists()) return
   const data = invSnap.data()
+  if (data.uid !== auth.currentUser?.uid) {
+    alert('アクセス権限がありません')
+    router.push('/')
+    return
+  }
   invoice.value = { ...data, id: invSnap.id } as InvoiceData
 
   if (data.billingAddressId) {
