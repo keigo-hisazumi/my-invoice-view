@@ -171,7 +171,7 @@ const formatDate = (dateStr: string) => {
 }
 
 const loadData = async () => {
-  const invSnap = await getDoc(doc(db, 'invoiceInvoices', invoiceId.value))
+  const invSnap = await getDoc(doc(db, 'invoices', invoiceId.value))
   if (!invSnap.exists()) return
   const data = invSnap.data()
   if (data.uid !== auth.currentUser?.uid) {
@@ -182,12 +182,12 @@ const loadData = async () => {
   invoice.value = { ...data, id: invSnap.id } as InvoiceData
 
   if (data.billingAddressId) {
-    const addrSnap = await getDoc(doc(db, 'invoiceBillingAddresses', data.billingAddressId))
+    const addrSnap = await getDoc(doc(db, 'billingAddresses', data.billingAddressId))
     if (addrSnap.exists()) billingAddress.value = { id: addrSnap.id, ...addrSnap.data() } as BillingAddress
   }
 
   if (data.billingSourceId) {
-    const srcSnap = await getDoc(doc(db, 'invoiceBillingSources', data.billingSourceId))
+    const srcSnap = await getDoc(doc(db, 'billingSources', data.billingSourceId))
     if (srcSnap.exists()) billingSource.value = { id: srcSnap.id, ...srcSnap.data() } as BillingSource
   }
 }
