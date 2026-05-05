@@ -60,6 +60,11 @@ const loadForEdit = async () => {
     return
   }
   const data = docSnap.data()
+  if (data.uid !== auth.currentUser?.uid) {
+    alert('アクセス権限がありません')
+    router.push('/items')
+    return
+  }
   Object.assign(item, {
     description: data.description ?? '',
     unitPrice: data.unitPrice ?? 0,

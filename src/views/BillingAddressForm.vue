@@ -85,6 +85,11 @@ const loadForEdit = async () => {
     return
   }
   const data = docSnap.data()
+  if (data.uid !== auth.currentUser?.uid) {
+    alert('アクセス権限がありません')
+    router.push('/billing-addresses')
+    return
+  }
   Object.assign(address, {
     name: data.name ?? '',
     contactPerson: data.contactPerson ?? '',
