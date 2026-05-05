@@ -25,19 +25,18 @@
         </div>
       </div>
     </div>
-
   </div>
 </template>
 
 <script setup lang="ts">
 import { reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { doc, getDoc, addDoc, updateDoc, collection, serverTimestamp } from 'firebase/firestore'
+import { db, auth } from '../firebase'
 import type { ItemMaster } from '../types/invoice'
 
 const route = useRoute()
 const router = useRouter()
-
-const STORAGE_KEY = 'itemMasters'
 
 const editId = computed(() => {
   const id = route.params.id
@@ -46,79 +45,60 @@ const editId = computed(() => {
 
 const isEdit = computed(() => editId.value !== '')
 
-const item = reactive<ItemMaster>({
-  id: '',
+const item = reactive<Omit<ItemMaster, 'id' | 'createdAt' | 'updatedAt'>>({
   description: '',
   unitPrice: 0,
-  unit: '',
-  createdAt: '',
-  updatedAt: ''
+  unit: ''
 })
 
-const loadAll = (): ItemMaster[] => {
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (!stored) return []
-  try {
-    return JSON.parse(stored)
-  } catch (e) {
-    console.error('Failed to load item masters:', e)
-    return []
-  }
-}
-
-const loadForEdit = () => {
-  const all = loadAll()
-  const found = all.find(i => i.id === editId.value)
-  if (!found) {
+const loadForEdit = async () => {
+  const docRef = doc(db, 'itemMasters', editId.value)
+  const docSnap = await getDoc(docRef)
+  if (!docSnap.exists()) {
     alert('指定された品目が見つかりません')
     router.push('/items')
     return
   }
-  Object.assign(item, found)
+  const data = docSnap.data()
+  Object.assign(item, {
+    description: data.description ?? '',
+    unitPrice: data.unitPrice ?? 0,
+    unit: data.unit ?? ''
+  })
 }
 
-const goBack = () => {
-  router.push('/items')
-}
+const goBack = () => router.push('/items')
 
-const saveItem = () => {
+const saveItem = async () => {
   if (!item.description.trim()) {
     alert('品名を入力してください')
     return
   }
 
-  const all = loadAll()
-  const now = new Date().toISOString()
+  const uid = auth.currentUser?.uid
+  if (!uid) return
 
   if (isEdit.value) {
-    const index = all.findIndex(i => i.id === editId.value)
-    if (index === -1) {
-      alert('編集対象が見つかりませんでした')
-      return
-    }
-    all[index] = {
+    await updateDoc(doc(db, 'itemMasters', editId.value), {
       ...item,
-      id: editId.value,
-      updatedAt: now
-    }
-  } else {
-    all.push({
-      ...item,
-      id: crypto.randomUUID(),
-      createdAt: now,
-      updatedAt: now
+      updatedAt: serverTimestamp()
     })
+    alert('品目を更新しました')
+  } else {
+    await addDoc(collection(db, 'itemMasters'), {
+      ...item,
+      uid,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    })
+    alert('品目を追加しました')
   }
 
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(all))
-  alert(isEdit.value ? '品目を更新しました' : '品目を追加しました')
   router.push('/items')
 }
 
 onMounted(() => {
-  if (isEdit.value) {
-    loadForEdit()
-  }
+  if (isEdit.value) loadForEdit()
 })
 </script>
 

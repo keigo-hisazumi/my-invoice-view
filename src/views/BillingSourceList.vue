@@ -45,52 +45,43 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { collection, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore'
+import { db, auth } from '../firebase'
 import type { BillingSource } from '../types/invoice'
 
 const router = useRouter()
 const sources = ref<BillingSource[]>([])
-
-const STORAGE_KEY = 'billingSources'
-
-const loadSources = () => {
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored) {
-    try {
-      sources.value = JSON.parse(stored)
-    } catch (e) {
-      console.error('Failed to load billing sources:', e)
-      sources.value = []
-    }
-  } else {
-    sources.value = []
-  }
-}
-
-const goToInvoices = () => {
-  router.push('/')
-}
-
-const goToCreate = () => {
-  router.push('/billing-sources/create')
-}
-
-const editSource = (id: string) => {
-  router.push(`/billing-sources/edit/${id}`)
-}
-
-const deleteSource = (id: string) => {
-  if (confirm('この請求元を削除してもよろしいですか？')) {
-    const filtered = sources.value.filter(s => s.id !== id)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered))
-    loadSources()
-  }
-}
+let unsubscribe: (() => void) | null = null
 
 onMounted(() => {
-  loadSources()
+  const uid = auth.currentUser?.uid
+  if (!uid) return
+
+  const q = query(
+    collection(db, 'billingSources'),
+    where('uid', '==', uid)
+  )
+
+  unsubscribe = onSnapshot(q, (snapshot) => {
+    sources.value = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as BillingSource))
+  })
 })
+
+onUnmounted(() => {
+  if (unsubscribe) unsubscribe()
+})
+
+const goToInvoices = () => router.push('/')
+const goToCreate = () => router.push('/billing-sources/create')
+const editSource = (id: string) => router.push(`/billing-sources/edit/${id}`)
+
+const deleteSource = async (id: string) => {
+  if (confirm('この請求元を削除してもよろしいですか？')) {
+    await deleteDoc(doc(db, 'billingSources', id))
+  }
+}
 </script>
 
 <style scoped>

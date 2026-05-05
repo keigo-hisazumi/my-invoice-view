@@ -52,12 +52,12 @@
 <script setup lang="ts">
 import { reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { doc, getDoc, addDoc, updateDoc, collection, serverTimestamp } from 'firebase/firestore'
+import { db, auth } from '../firebase'
 import type { BillingAddress } from '../types/invoice'
 
 const route = useRoute()
 const router = useRouter()
-
-const STORAGE_KEY = 'billingAddresses'
 
 const editId = computed(() => {
   const id = route.params.id
@@ -66,83 +66,68 @@ const editId = computed(() => {
 
 const isEdit = computed(() => editId.value !== '')
 
-const address = reactive<BillingAddress>({
-  id: '',
+const address = reactive<Omit<BillingAddress, 'id' | 'createdAt' | 'updatedAt'>>({
   name: '',
   contactPerson: '',
   postalCode: '',
   address: '',
   phone: '',
   email: '',
-  notes: '',
-  createdAt: '',
-  updatedAt: ''
+  notes: ''
 })
 
-const loadAll = (): BillingAddress[] => {
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (!stored) return []
-  try {
-    return JSON.parse(stored)
-  } catch (e) {
-    console.error('Failed to load billing addresses:', e)
-    return []
-  }
-}
-
-const loadForEdit = () => {
-  const all = loadAll()
-  const found = all.find(a => a.id === editId.value)
-  if (!found) {
+const loadForEdit = async () => {
+  const docRef = doc(db, 'billingAddresses', editId.value)
+  const docSnap = await getDoc(docRef)
+  if (!docSnap.exists()) {
     alert('指定された請求先が見つかりません')
     router.push('/billing-addresses')
     return
   }
-  Object.assign(address, found)
+  const data = docSnap.data()
+  Object.assign(address, {
+    name: data.name ?? '',
+    contactPerson: data.contactPerson ?? '',
+    postalCode: data.postalCode ?? '',
+    address: data.address ?? '',
+    phone: data.phone ?? '',
+    email: data.email ?? '',
+    notes: data.notes ?? ''
+  })
 }
 
-const goBack = () => {
-  router.push('/billing-addresses')
-}
+const goBack = () => router.push('/billing-addresses')
 
-const saveAddress = () => {
+const saveAddress = async () => {
   if (!address.name.trim()) {
     alert('請求先名を入力してください')
     return
   }
 
-  const all = loadAll()
-  const now = new Date().toISOString()
+  const uid = auth.currentUser?.uid
+  if (!uid) return
 
   if (isEdit.value) {
-    const index = all.findIndex(a => a.id === editId.value)
-    if (index === -1) {
-      alert('編集対象が見つかりませんでした')
-      return
-    }
-    all[index] = {
+    await updateDoc(doc(db, 'billingAddresses', editId.value), {
       ...address,
-      id: editId.value,
-      updatedAt: now
-    }
-  } else {
-    all.push({
-      ...address,
-      id: crypto.randomUUID(),
-      createdAt: now,
-      updatedAt: now
+      updatedAt: serverTimestamp()
     })
+    alert('請求先を更新しました')
+  } else {
+    await addDoc(collection(db, 'billingAddresses'), {
+      ...address,
+      uid,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    })
+    alert('請求先を追加しました')
   }
 
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(all))
-  alert(isEdit.value ? '請求先を更新しました' : '請求先を追加しました')
   router.push('/billing-addresses')
 }
 
 onMounted(() => {
-  if (isEdit.value) {
-    loadForEdit()
-  }
+  if (isEdit.value) loadForEdit()
 })
 </script>
 

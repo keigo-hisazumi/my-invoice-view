@@ -1,24 +1,17 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
+import { useAuth } from './composables/useAuth'
 
 const route = useRoute()
 const router = useRouter()
 
 const isLoginPage = computed(() => route.name === 'login')
 
-const authUser = computed(() => {
-  const raw = localStorage.getItem('auth')
-  if (!raw) return null
-  try {
-    return JSON.parse(raw) as { username: string }
-  } catch {
-    return null
-  }
-})
+const { currentUser, logout } = useAuth()
 
-const handleLogout = () => {
-  localStorage.removeItem('auth')
+const handleLogout = async () => {
+  await logout()
   router.push({ name: 'login' })
 }
 </script>
@@ -31,8 +24,8 @@ const handleLogout = () => {
           <h1>請求書作成システム</h1>
           <p>請求書を作成・管理できます</p>
         </div>
-        <div v-if="!isLoginPage && authUser" class="header-user">
-          <span class="user-name">{{ authUser.username }} さん</span>
+        <div v-if="!isLoginPage && currentUser" class="header-user">
+          <span class="user-name">{{ currentUser.email }} さん</span>
           <button @click="handleLogout" class="btn-logout">ログアウト</button>
         </div>
       </div>

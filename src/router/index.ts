@@ -9,6 +9,7 @@ import BillingSourceList from '../views/BillingSourceList.vue'
 import BillingSourceForm from '../views/BillingSourceForm.vue'
 import ItemMasterList from '../views/ItemMasterList.vue'
 import ItemMasterForm from '../views/ItemMasterForm.vue'
+import { auth } from '../firebase'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -106,19 +107,26 @@ const router = createRouter({
   ]
 })
 
-const isAuthenticated = () => {
-  return localStorage.getItem('auth') !== null
-}
+// Firebase auth 山の初期化を待つプロミス
+const authReady = new Promise<void>((resolve) => {
+  const unsub = auth.onAuthStateChanged(() => {
+    unsub()
+    resolve()
+  })
+})
 
-router.beforeEach((to, _from, next) => {
+router.beforeEach(async (to, _from, next) => {
   document.title = `${to.meta.title || '請求書システム'} | 請求書作成システム`
 
-  if (!to.meta.public && !isAuthenticated()) {
+  await authReady
+  const user = auth.currentUser
+
+  if (!to.meta.public && !user) {
     next({ name: 'login', query: { redirect: to.fullPath } })
     return
   }
 
-  if (to.name === 'login' && isAuthenticated()) {
+  if (to.name === 'login' && user) {
     next({ name: 'invoice-list' })
     return
   }
