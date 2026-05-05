@@ -52,7 +52,7 @@ const item = reactive<Omit<ItemMaster, 'id' | 'createdAt' | 'updatedAt'>>({
 })
 
 const loadForEdit = async () => {
-  const docRef = doc(db, 'invoiceItemMasters', editId.value)
+  const docRef = doc(db, 'itemMasters', editId.value)
   const docSnap = await getDoc(docRef)
   if (!docSnap.exists()) {
     alert('指定された品目が見つかりません')
@@ -79,13 +79,13 @@ const saveItem = async () => {
   if (!uid) return
 
   if (isEdit.value) {
-    await updateDoc(doc(db, 'invoiceItemMasters', editId.value), {
+    await updateDoc(doc(db, 'itemMasters', editId.value), {
       ...item,
       updatedAt: serverTimestamp()
     })
     alert('品目を更新しました')
   } else {
-    await addDoc(collection(db, 'invoiceItemMasters'), {
+    await addDoc(collection(db, 'itemMasters'), {
       ...item,
       uid,
       createdAt: serverTimestamp(),
