@@ -88,6 +88,9 @@ import { doc, getDoc, addDoc, updateDoc, collection, serverTimestamp } from 'fir
 import { db, auth } from '../firebase'
 import { authReady } from '../router'
 import type { BillingSource } from '../types/invoice'
+import { useToast } from '../composables/useToast'
+
+const { show: showToast } = useToast()
 
 const route = useRoute()
 const router = useRouter()
@@ -149,7 +152,7 @@ const goBack = () => router.push('/billing-sources')
 
 const saveSource = async () => {
   if (!source.name.trim()) {
-    alert('会社名・屋号を入力してください')
+    showToast('会社名・屋号を入力してください', 'error')
     return
   }
 
@@ -162,7 +165,7 @@ const saveSource = async () => {
         ...source,
         updatedAt: serverTimestamp()
       })
-      alert('請求元を更新しました')
+      showToast('請求元を更新しました')
     } else {
       await addDoc(collection(db, 'billingSources'), {
         ...source,
@@ -170,12 +173,12 @@ const saveSource = async () => {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       })
-      alert('請求元を追加しました')
+      showToast('請求元を追加しました')
     }
     router.push('/billing-sources')
   } catch (e) {
     console.error(e)
-    alert('保存中にエラーが発生しました。もう一度お試しください。')
+    showToast('保存中にエラーが発生しました。もう一度お試しください。', 'error')
   }
 }
 

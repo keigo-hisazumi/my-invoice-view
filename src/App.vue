@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
 import { useAuth } from './composables/useAuth'
+import ToastNotification from './components/ToastNotification.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -34,6 +35,7 @@ const handleLogout = async () => {
       <RouterView />
     </main>
   </div>
+  <ToastNotification />
 </template>
 
 <style scoped>
