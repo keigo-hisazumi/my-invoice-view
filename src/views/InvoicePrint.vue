@@ -183,12 +183,16 @@ const loadData = async () => {
 
   if (data.billingAddressId) {
     const addrSnap = await getDoc(doc(db, 'billingAddresses', data.billingAddressId))
-    if (addrSnap.exists()) billingAddress.value = { id: addrSnap.id, ...addrSnap.data() } as BillingAddress
+    if (addrSnap.exists() && addrSnap.data().uid === auth.currentUser?.uid) {
+      billingAddress.value = { id: addrSnap.id, ...addrSnap.data() } as BillingAddress
+    }
   }
 
   if (data.billingSourceId) {
     const srcSnap = await getDoc(doc(db, 'billingSources', data.billingSourceId))
-    if (srcSnap.exists()) billingSource.value = { id: srcSnap.id, ...srcSnap.data() } as BillingSource
+    if (srcSnap.exists() && srcSnap.data().uid === auth.currentUser?.uid) {
+      billingSource.value = { id: srcSnap.id, ...srcSnap.data() } as BillingSource
+    }
   }
 }
 
