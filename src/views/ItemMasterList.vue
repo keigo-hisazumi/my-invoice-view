@@ -53,7 +53,7 @@ onMounted(() => {
   if (!uid) return
 
   const q = query(
-    collection(db, 'invoiceItemMasters'),
+    collection(db, 'itemMasters'),
     where('uid', '==', uid)
   )
 
@@ -72,7 +72,7 @@ const editItem = (id: string) => router.push(`/items/edit/${id}`)
 
 const deleteItem = async (id: string) => {
   if (confirm('この品目を削除してもよろしいですか？')) {
-    await deleteDoc(doc(db, 'invoiceItemMasters', id))
+    await deleteDoc(doc(db, 'itemMasters', id))
   }
 }
 </script>
