@@ -33,6 +33,7 @@ import { reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { doc, getDoc, addDoc, updateDoc, collection, serverTimestamp } from 'firebase/firestore'
 import { db, auth } from '../firebase'
+import { authReady } from '../router'
 import type { ItemMaster } from '../types/invoice'
 
 const route = useRoute()
@@ -52,6 +53,7 @@ const item = reactive<Omit<ItemMaster, 'id' | 'createdAt' | 'updatedAt'>>({
 })
 
 const loadForEdit = async () => {
+  await authReady
   const docRef = doc(db, 'itemMasters', editId.value)
   const docSnap = await getDoc(docRef)
   if (!docSnap.exists()) {

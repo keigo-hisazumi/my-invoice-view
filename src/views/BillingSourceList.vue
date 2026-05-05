@@ -49,13 +49,15 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { collection, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore'
 import { db, auth } from '../firebase'
+import { authReady } from '../router'
 import type { BillingSource } from '../types/invoice'
 
 const router = useRouter()
 const sources = ref<BillingSource[]>([])
 let unsubscribe: (() => void) | null = null
 
-onMounted(() => {
+onMounted(async () => {
+  await authReady
   const uid = auth.currentUser?.uid
   if (!uid) return
 

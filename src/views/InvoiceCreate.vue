@@ -208,6 +208,7 @@ import {
   collection, query, where, getDocs, getDoc, addDoc, updateDoc, doc, serverTimestamp
 } from 'firebase/firestore'
 import { db, auth } from '../firebase'
+import { authReady } from '../router'
 import type { InvoiceData, BillingAddress, BillingSource, ItemMaster } from '../types/invoice'
 
 const router = useRouter()
@@ -260,6 +261,7 @@ const invoice = reactive<InvoiceData>({
 })
 
 const loadBillingData = async () => {
+  await authReady
   const uid = auth.currentUser?.uid
   if (!uid) return
 

@@ -54,6 +54,7 @@ import { reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { doc, getDoc, addDoc, updateDoc, collection, serverTimestamp } from 'firebase/firestore'
 import { db, auth } from '../firebase'
+import { authReady } from '../router'
 import type { BillingAddress } from '../types/invoice'
 
 const route = useRoute()
@@ -77,6 +78,7 @@ const address = reactive<Omit<BillingAddress, 'id' | 'createdAt' | 'updatedAt'>>
 })
 
 const loadForEdit = async () => {
+  await authReady
   const docRef = doc(db, 'billingAddresses', editId.value)
   const docSnap = await getDoc(docRef)
   if (!docSnap.exists()) {
