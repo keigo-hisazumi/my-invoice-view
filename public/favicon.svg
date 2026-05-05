@@ -17,7 +17,7 @@
   <rect x="112" y="104" width="18" height="8" rx="4" fill="#AFC2ED"/>
   <circle cx="90" cy="132" r="24" fill="#3D7DFF"/>
   <path d="M79 122L90 135L101 122" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M90 122V148" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <path d="M90 132V148" stroke="white" stroke-width="4" stroke-linecap="round"/>
   <path d="M79 132H101" stroke="white" stroke-width="4" stroke-linecap="round"/>
   <path d="M79 138H101" stroke="white" stroke-width="4" stroke-linecap="round"/>
 </svg>
