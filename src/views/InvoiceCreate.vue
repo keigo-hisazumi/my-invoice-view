@@ -264,9 +264,9 @@ const loadBillingData = async () => {
   if (!uid) return
 
   const [addrSnap, srcSnap, itemSnap] = await Promise.all([
-    getDocs(query(collection(db, 'invoiceBillingAddresses'), where('uid', '==', uid))),
-    getDocs(query(collection(db, 'invoiceBillingSources'), where('uid', '==', uid))),
-    getDocs(query(collection(db, 'invoiceItemMasters'), where('uid', '==', uid)))
+    getDocs(query(collection(db, 'billingAddresses'), where('uid', '==', uid))),
+    getDocs(query(collection(db, 'billingSources'), where('uid', '==', uid))),
+    getDocs(query(collection(db, 'itemMasters'), where('uid', '==', uid)))
   ])
 
   billingAddresses.value = addrSnap.docs.map(d => ({ id: d.id, ...d.data() } as BillingAddress))
@@ -346,7 +346,7 @@ const calculateTotals = () => {
 calculateTotals()
 
 const loadInvoice = async (id: string) => {
-  const docSnap = await getDoc(doc(db, 'invoiceInvoices', id))
+  const docSnap = await getDoc(doc(db, 'invoices', id))
   if (!docSnap.exists()) return
   const data = docSnap.data()
   if (data.uid !== auth.currentUser?.uid) {
@@ -392,14 +392,14 @@ const saveInvoice = async () => {
   const clientName = selectedBillingAddress.value?.name ?? invoice.clientName
 
   if (isEditMode.value && invoiceId.value) {
-    await updateDoc(doc(db, 'invoiceInvoices', invoiceId.value), {
+    await updateDoc(doc(db, 'invoices', invoiceId.value), {
       ...invoice,
       clientName,
       updatedAt: serverTimestamp()
     })
     alert('請求書を更新しました')
   } else {
-    await addDoc(collection(db, 'invoiceInvoices'), {
+    await addDoc(collection(db, 'invoices'), {
       ...invoice,
       clientName,
       uid,
