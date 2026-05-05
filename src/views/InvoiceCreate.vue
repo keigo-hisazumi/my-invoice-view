@@ -210,6 +210,9 @@ import {
 import { db, auth } from '../firebase'
 import { authReady } from '../router'
 import type { InvoiceData, BillingAddress, BillingSource, ItemMaster } from '../types/invoice'
+import { useToast } from '../composables/useToast'
+
+const { show: showToast } = useToast()
 
 const router = useRouter()
 const route = useRoute()
@@ -376,15 +379,15 @@ const goToPrint = () => router.push(`/print/${invoiceId.value}`)
 
 const saveInvoice = async () => {
   if (!invoice.invoiceNumber) {
-    alert('請求書番号を入力してください')
+    showToast('請求書番号を入力してください', 'error')
     return
   }
   if (!invoice.billingAddressId) {
-    alert('請求先を選択してください')
+    showToast('請求先を選択してください', 'error')
     return
   }
   if (!invoice.billingSourceId) {
-    alert('請求元を選択してください')
+    showToast('請求元を選択してください', 'error')
     return
   }
 
@@ -400,7 +403,7 @@ const saveInvoice = async () => {
         clientName,
         updatedAt: serverTimestamp()
       })
-      alert('請求書を更新しました')
+      showToast('請求書を更新しました')
     } else {
       await addDoc(collection(db, 'invoices'), {
         ...invoice,
@@ -409,12 +412,12 @@ const saveInvoice = async () => {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       })
-      alert('請求書を保存しました')
+      showToast('請求書を保存しました')
     }
     router.push('/')
   } catch (e) {
     console.error(e)
-    alert('保存中にエラーが発生しました。もう一度お試しください。')
+    showToast('保存中にエラーが発生しました。もう一度お試しください。', 'error')
   }
 }
 </script>

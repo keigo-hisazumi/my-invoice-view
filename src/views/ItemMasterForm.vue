@@ -35,6 +35,9 @@ import { doc, getDoc, addDoc, updateDoc, collection, serverTimestamp } from 'fir
 import { db, auth } from '../firebase'
 import { authReady } from '../router'
 import type { ItemMaster } from '../types/invoice'
+import { useToast } from '../composables/useToast'
+
+const { show: showToast } = useToast()
 
 const route = useRoute()
 const router = useRouter()
@@ -78,7 +81,7 @@ const goBack = () => router.push('/items')
 
 const saveItem = async () => {
   if (!item.description.trim()) {
-    alert('品名を入力してください')
+    showToast('品名を入力してください', 'error')
     return
   }
 
@@ -91,7 +94,7 @@ const saveItem = async () => {
         ...item,
         updatedAt: serverTimestamp()
       })
-      alert('品目を更新しました')
+      showToast('品目を更新しました')
     } else {
       await addDoc(collection(db, 'itemMasters'), {
         ...item,
@@ -99,12 +102,12 @@ const saveItem = async () => {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       })
-      alert('品目を追加しました')
+      showToast('品目を追加しました')
     }
     router.push('/items')
   } catch (e) {
     console.error(e)
-    alert('保存中にエラーが発生しました。もう一度お試しください。')
+    showToast('保存中にエラーが発生しました。もう一度お試しください。', 'error')
   }
 }
 
