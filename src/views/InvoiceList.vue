@@ -98,7 +98,12 @@ const editInvoice = (id: string) => router.push(`/edit/${id}`)
 
 const deleteInvoice = async (id: string) => {
   if (confirm('この請求書を削除してもよろしいですか？')) {
-    await deleteDoc(doc(db, 'invoices', id))
+    try {
+      await deleteDoc(doc(db, 'invoices', id))
+    } catch (e) {
+      console.error(e)
+      alert('削除中にエラーが発生しました。もう一度お試しください。')
+    }
   }
 }
 

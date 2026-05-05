@@ -114,23 +114,27 @@ const saveAddress = async () => {
   const uid = auth.currentUser?.uid
   if (!uid) return
 
-  if (isEdit.value) {
-    await updateDoc(doc(db, 'billingAddresses', editId.value), {
-      ...address,
-      updatedAt: serverTimestamp()
-    })
-    alert('請求先を更新しました')
-  } else {
-    await addDoc(collection(db, 'billingAddresses'), {
-      ...address,
-      uid,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    })
-    alert('請求先を追加しました')
+  try {
+    if (isEdit.value) {
+      await updateDoc(doc(db, 'billingAddresses', editId.value), {
+        ...address,
+        updatedAt: serverTimestamp()
+      })
+      alert('請求先を更新しました')
+    } else {
+      await addDoc(collection(db, 'billingAddresses'), {
+        ...address,
+        uid,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      })
+      alert('請求先を追加しました')
+    }
+    router.push('/billing-addresses')
+  } catch (e) {
+    console.error(e)
+    alert('保存中にエラーが発生しました。もう一度お試しください。')
   }
-
-  router.push('/billing-addresses')
 }
 
 onMounted(() => {

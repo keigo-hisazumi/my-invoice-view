@@ -81,7 +81,12 @@ const editSource = (id: string) => router.push(`/billing-sources/edit/${id}`)
 
 const deleteSource = async (id: string) => {
   if (confirm('この請求元を削除してもよろしいですか？')) {
-    await deleteDoc(doc(db, 'billingSources', id))
+    try {
+      await deleteDoc(doc(db, 'billingSources', id))
+    } catch (e) {
+      console.error(e)
+      alert('削除中にエラーが発生しました。もう一度お試しください。')
+    }
   }
 }
 </script>

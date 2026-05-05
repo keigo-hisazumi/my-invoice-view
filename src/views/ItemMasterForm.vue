@@ -85,23 +85,27 @@ const saveItem = async () => {
   const uid = auth.currentUser?.uid
   if (!uid) return
 
-  if (isEdit.value) {
-    await updateDoc(doc(db, 'itemMasters', editId.value), {
-      ...item,
-      updatedAt: serverTimestamp()
-    })
-    alert('品目を更新しました')
-  } else {
-    await addDoc(collection(db, 'itemMasters'), {
-      ...item,
-      uid,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    })
-    alert('品目を追加しました')
+  try {
+    if (isEdit.value) {
+      await updateDoc(doc(db, 'itemMasters', editId.value), {
+        ...item,
+        updatedAt: serverTimestamp()
+      })
+      alert('品目を更新しました')
+    } else {
+      await addDoc(collection(db, 'itemMasters'), {
+        ...item,
+        uid,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      })
+      alert('品目を追加しました')
+    }
+    router.push('/items')
+  } catch (e) {
+    console.error(e)
+    alert('保存中にエラーが発生しました。もう一度お試しください。')
   }
-
-  router.push('/items')
 }
 
 onMounted(() => {

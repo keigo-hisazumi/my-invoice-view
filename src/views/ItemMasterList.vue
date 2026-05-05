@@ -74,7 +74,12 @@ const editItem = (id: string) => router.push(`/items/edit/${id}`)
 
 const deleteItem = async (id: string) => {
   if (confirm('この品目を削除してもよろしいですか？')) {
-    await deleteDoc(doc(db, 'itemMasters', id))
+    try {
+      await deleteDoc(doc(db, 'itemMasters', id))
+    } catch (e) {
+      console.error(e)
+      alert('削除中にエラーが発生しました。もう一度お試しください。')
+    }
   }
 }
 </script>
