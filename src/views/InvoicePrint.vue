@@ -95,6 +95,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { doc, getDoc } from 'firebase/firestore'
 import { db, auth } from '../firebase'
+import { authReady } from '../router'
 import type { InvoiceData, BillingAddress, BillingSource } from '../types/invoice'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
@@ -171,6 +172,7 @@ const formatDate = (dateStr: string) => {
 }
 
 const loadData = async () => {
+  await authReady
   const invSnap = await getDoc(doc(db, 'invoices', invoiceId.value))
   if (!invSnap.exists()) return
   const data = invSnap.data()

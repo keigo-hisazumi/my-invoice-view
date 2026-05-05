@@ -107,8 +107,8 @@ const router = createRouter({
   ]
 })
 
-// Firebase auth 山の初期化を待つプロミス
-const authReady = new Promise<void>((resolve) => {
+// Firebase Auth の初期化完了を待つ Promise
+export const authReady = new Promise<void>((resolve) => {
   const unsub = auth.onAuthStateChanged(() => {
     unsub()
     resolve()
