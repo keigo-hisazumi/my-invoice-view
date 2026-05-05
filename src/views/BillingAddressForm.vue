@@ -77,7 +77,7 @@ const address = reactive<Omit<BillingAddress, 'id' | 'createdAt' | 'updatedAt'>>
 })
 
 const loadForEdit = async () => {
-  const docRef = doc(db, 'invoiceBillingAddresses', editId.value)
+  const docRef = doc(db, 'billingAddresses', editId.value)
   const docSnap = await getDoc(docRef)
   if (!docSnap.exists()) {
     alert('指定された請求先が見つかりません')
@@ -108,13 +108,13 @@ const saveAddress = async () => {
   if (!uid) return
 
   if (isEdit.value) {
-    await updateDoc(doc(db, 'invoiceBillingAddresses', editId.value), {
+    await updateDoc(doc(db, 'billingAddresses', editId.value), {
       ...address,
       updatedAt: serverTimestamp()
     })
     alert('請求先を更新しました')
   } else {
-    await addDoc(collection(db, 'invoiceBillingAddresses'), {
+    await addDoc(collection(db, 'billingAddresses'), {
       ...address,
       uid,
       createdAt: serverTimestamp(),
