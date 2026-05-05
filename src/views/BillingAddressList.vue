@@ -60,7 +60,7 @@ onMounted(() => {
   if (!uid) return
 
   const q = query(
-    collection(db, 'invoiceBillingAddresses'),
+    collection(db, 'billingAddresses'),
     where('uid', '==', uid)
   )
 
@@ -79,7 +79,7 @@ const editAddress = (id: string) => router.push(`/billing-addresses/edit/${id}`)
 
 const deleteAddress = async (id: string) => {
   if (confirm('この請求先を削除してもよろしいですか？')) {
-    await deleteDoc(doc(db, 'invoiceBillingAddresses', id))
+    await deleteDoc(doc(db, 'billingAddresses', id))
   }
 }
 </script>
