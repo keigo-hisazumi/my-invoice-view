@@ -156,23 +156,27 @@ const saveSource = async () => {
   const uid = auth.currentUser?.uid
   if (!uid) return
 
-  if (isEdit.value) {
-    await updateDoc(doc(db, 'billingSources', editId.value), {
-      ...source,
-      updatedAt: serverTimestamp()
-    })
-    alert('請求元を更新しました')
-  } else {
-    await addDoc(collection(db, 'billingSources'), {
-      ...source,
-      uid,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    })
-    alert('請求元を追加しました')
+  try {
+    if (isEdit.value) {
+      await updateDoc(doc(db, 'billingSources', editId.value), {
+        ...source,
+        updatedAt: serverTimestamp()
+      })
+      alert('請求元を更新しました')
+    } else {
+      await addDoc(collection(db, 'billingSources'), {
+        ...source,
+        uid,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      })
+      alert('請求元を追加しました')
+    }
+    router.push('/billing-sources')
+  } catch (e) {
+    console.error(e)
+    alert('保存中にエラーが発生しました。もう一度お試しください。')
   }
-
-  router.push('/billing-sources')
 }
 
 onMounted(() => {

@@ -393,25 +393,29 @@ const saveInvoice = async () => {
 
   const clientName = selectedBillingAddress.value?.name ?? invoice.clientName
 
-  if (isEditMode.value && invoiceId.value) {
-    await updateDoc(doc(db, 'invoices', invoiceId.value), {
-      ...invoice,
-      clientName,
-      updatedAt: serverTimestamp()
-    })
-    alert('請求書を更新しました')
-  } else {
-    await addDoc(collection(db, 'invoices'), {
-      ...invoice,
-      clientName,
-      uid,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    })
-    alert('請求書を保存しました')
+  try {
+    if (isEditMode.value && invoiceId.value) {
+      await updateDoc(doc(db, 'invoices', invoiceId.value), {
+        ...invoice,
+        clientName,
+        updatedAt: serverTimestamp()
+      })
+      alert('請求書を更新しました')
+    } else {
+      await addDoc(collection(db, 'invoices'), {
+        ...invoice,
+        clientName,
+        uid,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      })
+      alert('請求書を保存しました')
+    }
+    router.push('/')
+  } catch (e) {
+    console.error(e)
+    alert('保存中にエラーが発生しました。もう一度お試しください。')
   }
-
-  router.push('/')
 }
 </script>
 

@@ -81,7 +81,12 @@ const editAddress = (id: string) => router.push(`/billing-addresses/edit/${id}`)
 
 const deleteAddress = async (id: string) => {
   if (confirm('この請求先を削除してもよろしいですか？')) {
-    await deleteDoc(doc(db, 'billingAddresses', id))
+    try {
+      await deleteDoc(doc(db, 'billingAddresses', id))
+    } catch (e) {
+      console.error(e)
+      alert('削除中にエラーが発生しました。もう一度お試しください。')
+    }
   }
 }
 </script>
