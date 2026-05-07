@@ -60,7 +60,7 @@
 <script setup lang="ts">
 import { reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { doc, getDoc, addDoc, updateDoc, collection, serverTimestamp, runTransaction } from 'firebase/firestore'
+import { doc, getDoc, addDoc, updateDoc, getDocs, collection, query, where, serverTimestamp } from 'firebase/firestore'
 import { db, auth } from '../firebase'
 import { authReady } from '../router'
 import type { BillingAddress } from '../types/invoice'
@@ -117,16 +117,17 @@ const loadForEdit = async () => {
 }
 
 const generateCustomerCode = async (uid: string): Promise<string> => {
-  // billingAddresses コレクション内のカウンタドキュメントを使用（既存ルールで許可済み）
-  const counterRef = doc(db, 'billingAddresses', `_counter_${uid}`)
-  const nextNumber = await runTransaction(db, async (transaction) => {
-    const counterSnap = await transaction.get(counterRef)
-    const current = counterSnap.exists() ? (counterSnap.data().value as number) : 0
-    const next = current + 1
-    transaction.set(counterRef, { uid, value: next, _isCounter: true })
-    return next
+  const q = query(collection(db, 'billingAddresses'), where('uid', '==', uid))
+  const snapshot = await getDocs(q)
+  let maxNum = 0
+  snapshot.forEach(d => {
+    const code = d.data().customerCode as string | undefined
+    if (code && /^C\d+$/.test(code)) {
+      const n = parseInt(code.slice(1), 10)
+      if (n > maxNum) maxNum = n
+    }
   })
-  return `C${String(nextNumber).padStart(5, '0')}`
+  return `C${String(maxNum + 1).padStart(5, '0')}`
 }
 
 const goBack = () => router.push('/billing-addresses')
