@@ -15,6 +15,7 @@
       <table class="item-table">
         <thead>
           <tr>
+            <th>並び順</th>
             <th>品名</th>
             <th>単価</th>
             <th>単位</th>
@@ -22,7 +23,8 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="item in items" :key="item.id" class="item-row">
+          <tr v-for="item in sortedItems" :key="item.id" class="item-row">
+            <td data-label="並び順" class="sort-order">{{ item.sortOrder ?? '-' }}</td>
             <td data-label="品名" class="name">{{ item.description }}</td>
             <td data-label="単価" class="price">￥{{ item.unitPrice.toLocaleString() }}</td>
             <td data-label="単位">{{ item.unit || '-' }}</td>
@@ -38,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { collection, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore'
 import { db, auth } from '../firebase'
@@ -47,6 +49,15 @@ import type { ItemMaster } from '../types/invoice'
 
 const router = useRouter()
 const items = ref<ItemMaster[]>([])
+
+const sortedItems = computed(() =>
+  [...items.value].sort((a, b) => {
+    const aOrder = a.sortOrder ?? Infinity
+    const bOrder = b.sortOrder ?? Infinity
+    if (aOrder !== bOrder) return aOrder - bOrder
+    return a.description.localeCompare(b.description, 'ja')
+  })
+)
 let unsubscribe: (() => void) | null = null
 
 onMounted(async () => {
