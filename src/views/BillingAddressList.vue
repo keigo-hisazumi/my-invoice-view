@@ -69,7 +69,9 @@ onMounted(async () => {
   )
 
   unsubscribe = onSnapshot(q, (snapshot) => {
-    addresses.value = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as BillingAddress))
+    addresses.value = snapshot.docs
+      .filter(d => !d.data()._isCounter)
+      .map(d => ({ id: d.id, ...d.data() } as BillingAddress))
   })
 })
 

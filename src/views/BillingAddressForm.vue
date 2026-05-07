@@ -117,12 +117,13 @@ const loadForEdit = async () => {
 }
 
 const generateCustomerCode = async (uid: string): Promise<string> => {
-  const counterRef = doc(db, 'counters', `customerCode_${uid}`)
+  // billingAddresses コレクション内のカウンタドキュメントを使用（既存ルールで許可済み）
+  const counterRef = doc(db, 'billingAddresses', `_counter_${uid}`)
   const nextNumber = await runTransaction(db, async (transaction) => {
     const counterSnap = await transaction.get(counterRef)
     const current = counterSnap.exists() ? (counterSnap.data().value as number) : 0
     const next = current + 1
-    transaction.set(counterRef, { value: next })
+    transaction.set(counterRef, { uid, value: next, _isCounter: true })
     return next
   })
   return `C${String(nextNumber).padStart(5, '0')}`
