@@ -10,6 +10,14 @@
 
     <div class="form-section">
       <h3>請求先情報</h3>
+      <div v-if="isEdit" class="form-group">
+        <label>顧客コード</label>
+        <input :value="address.customerCode" type="text" disabled class="input-readonly" />
+      </div>
+      <div v-else class="form-group customer-code-preview">
+        <label>顧客コード</label>
+        <span class="code-auto-badge">保存時に自動採番されます</span>
+      </div>
       <div class="form-group">
         <label>請求先名 <span class="required">*</span></label>
         <input v-model="address.name" type="text" placeholder="株式会社〇〇" />
@@ -52,7 +60,7 @@
 <script setup lang="ts">
 import { reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { doc, getDoc, addDoc, updateDoc, collection, serverTimestamp } from 'firebase/firestore'
+import { doc, getDoc, addDoc, updateDoc, getDocs, collection, query, where, serverTimestamp } from 'firebase/firestore'
 import { db, auth } from '../firebase'
 import { authReady } from '../router'
 import type { BillingAddress } from '../types/invoice'
@@ -71,6 +79,7 @@ const editId = computed(() => {
 const isEdit = computed(() => editId.value !== '')
 
 const address = reactive<Omit<BillingAddress, 'id' | 'createdAt' | 'updatedAt'>>({
+  customerCode: '',
   name: '',
   contactPerson: '',
   postalCode: '',
@@ -96,6 +105,7 @@ const loadForEdit = async () => {
     return
   }
   Object.assign(address, {
+    customerCode: data.customerCode ?? '',
     name: data.name ?? '',
     contactPerson: data.contactPerson ?? '',
     postalCode: data.postalCode ?? '',
@@ -104,6 +114,20 @@ const loadForEdit = async () => {
     email: data.email ?? '',
     notes: data.notes ?? ''
   })
+}
+
+const generateCustomerCode = async (uid: string): Promise<string> => {
+  const q = query(collection(db, 'billingAddresses'), where('uid', '==', uid))
+  const snapshot = await getDocs(q)
+  let maxNum = 0
+  snapshot.forEach(d => {
+    const code = d.data().customerCode as string | undefined
+    if (code && /^C\d+$/.test(code)) {
+      const n = parseInt(code.slice(1), 10)
+      if (n > maxNum) maxNum = n
+    }
+  })
+  return `C${String(maxNum + 1).padStart(5, '0')}`
 }
 
 const goBack = () => router.push('/billing-addresses')
@@ -125,8 +149,10 @@ const saveAddress = async () => {
       })
       showToast('請求先を更新しました')
     } else {
+      const customerCode = await generateCustomerCode(uid)
       await addDoc(collection(db, 'billingAddresses'), {
         ...address,
+        customerCode,
         uid,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
@@ -261,6 +287,33 @@ h3 {
 .form-group textarea:focus {
   outline: none;
   border-color: #3498db;
+}
+
+.input-readonly {
+  background: #f4f6f8;
+  color: #666;
+  cursor: default;
+}
+
+.customer-code-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.customer-code-preview label {
+  margin-bottom: 0;
+  white-space: nowrap;
+}
+
+.code-auto-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  background: #eaf4fb;
+  color: #2980b9;
+  border: 1px solid #aed6f1;
+  border-radius: 4px;
+  font-size: 13px;
 }
 
 @media (max-width: 768px) {

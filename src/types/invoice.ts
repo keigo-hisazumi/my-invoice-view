@@ -86,6 +86,7 @@ export interface ItemMaster {
 // 請求先データの型定義
 export interface BillingAddress {
   id: string
+  customerCode: string     // 顧客コード（自動採番）
   name: string             // 請求先名（会社名・お客様名）
   contactPerson: string    // 担当者名
   postalCode: string       // 郵便番号

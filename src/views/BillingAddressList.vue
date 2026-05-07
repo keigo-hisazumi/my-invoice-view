@@ -15,6 +15,7 @@
       <table class="address-table">
         <thead>
           <tr>
+            <th>顧客コード</th>
             <th>請求先名</th>
             <th>担当者</th>
             <th>住所</th>
@@ -25,6 +26,7 @@
         </thead>
         <tbody>
           <tr v-for="address in addresses" :key="address.id" class="address-row">
+            <td data-label="顧客コード" class="customer-code">{{ address.customerCode || '-' }}</td>
             <td data-label="請求先名" class="name">{{ address.name }}</td>
             <td data-label="担当者">{{ address.contactPerson || '-' }}</td>
             <td data-label="住所">
@@ -214,6 +216,13 @@ const deleteAddress = async (id: string) => {
 .address-table td {
   padding: 15px;
   color: #555;
+}
+
+.address-table td.customer-code {
+  font-family: monospace;
+  font-size: 13px;
+  color: #2980b9;
+  white-space: nowrap;
 }
 
 .address-table td.name {
