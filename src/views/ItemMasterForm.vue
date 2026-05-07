@@ -23,6 +23,10 @@
           <label>単位</label>
           <input v-model="item.unit" type="text" placeholder="例: 時間、曲" />
         </div>
+        <div class="form-group">
+          <label>並び順</label>
+          <input v-model.number="item.sortOrder" type="number" step="1" placeholder="例: 10" />
+        </div>
       </div>
     </div>
   </div>
@@ -52,7 +56,8 @@ const isEdit = computed(() => editId.value !== '')
 const item = reactive<Omit<ItemMaster, 'id' | 'createdAt' | 'updatedAt'>>({
   description: '',
   unitPrice: 0,
-  unit: ''
+  unit: '',
+  sortOrder: undefined
 })
 
 const loadForEdit = async () => {
@@ -73,7 +78,8 @@ const loadForEdit = async () => {
   Object.assign(item, {
     description: data.description ?? '',
     unitPrice: data.unitPrice ?? 0,
-    unit: data.unit ?? ''
+    unit: data.unit ?? '',
+    sortOrder: data.sortOrder ?? undefined
   })
 }
 

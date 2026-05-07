@@ -282,7 +282,13 @@ const loadBillingData = async () => {
 
   billingAddresses.value = addrSnap.docs.map(d => ({ id: d.id, ...d.data() } as BillingAddress))
   billingSources.value = srcSnap.docs.map(d => ({ id: d.id, ...d.data() } as BillingSource))
-  itemMasters.value = itemSnap.docs.map(d => ({ id: d.id, ...d.data() } as ItemMaster))
+  const rawItems = itemSnap.docs.map(d => ({ id: d.id, ...d.data() } as ItemMaster))
+  itemMasters.value = rawItems.sort((a, b) => {
+    const aOrder = a.sortOrder ?? Infinity
+    const bOrder = b.sortOrder ?? Infinity
+    if (aOrder !== bOrder) return aOrder - bOrder
+    return a.description.localeCompare(b.description, 'ja')
+  })
 }
 
 const selectedBillingAddress = computed(() =>
