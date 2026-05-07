@@ -15,7 +15,12 @@
       <div class="form-row">
         <div class="form-group">
           <label>請求書番号</label>
-          <input v-model="invoice.invoiceNumber" type="text" placeholder="INV-001" :readonly="isViewMode" :class="{ 'readonly-field': isViewMode }" />
+          <div v-if="!isViewMode" class="invoice-number-field">
+            <input v-model="invoice.invoiceNumber" type="text" placeholder="顧客選択時に自動採番されます" :readonly="isGeneratingNumber" :class="{ 'readonly-field': isGeneratingNumber }" />
+            <span v-if="isGeneratingNumber" class="generating-badge">採番中...</span>
+            <span v-else-if="invoice.invoiceNumber && invoice.billingAddressId" class="auto-generated-badge">自動採番済み</span>
+          </div>
+          <input v-else :value="invoice.invoiceNumber" type="text" readonly class="readonly-field" />
         </div>
         <div class="form-group">
           <label>請求日</label>
@@ -219,6 +224,7 @@ const route = useRoute()
 const billingAddresses = ref<BillingAddress[]>([])
 const billingSources = ref<BillingSource[]>([])
 const itemMasters = ref<ItemMaster[]>([])
+const isGeneratingNumber = ref(false)
 
 const isViewMode = computed(() => route.name === 'invoice-view')
 const isEditMode = computed(() => route.name === 'invoice-edit')
@@ -287,8 +293,42 @@ const selectedBillingSource = computed(() =>
   invoice.billingSourceId ? billingSources.value.find(s => s.id === invoice.billingSourceId) : null
 )
 
-const onBillingAddressChange = (e: Event) => {
-  invoice.billingAddressId = (e.target as HTMLSelectElement).value
+const generateInvoiceNumber = async (billingAddressId: string): Promise<string> => {
+  const uid = auth.currentUser?.uid
+  if (!uid) return ''
+
+  const address = billingAddresses.value.find(a => a.id === billingAddressId)
+  if (!address?.customerCode) return ''
+
+  const customerCode = address.customerCode
+  const now = new Date()
+  const yyyymm = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`
+  const prefix = `${customerCode}-${yyyymm}-`
+
+  const snap = await getDocs(query(collection(db, 'invoices'), where('uid', '==', uid), where('billingAddressId', '==', billingAddressId)))
+  let maxSeq = 0
+  snap.forEach(d => {
+    const num = d.data().invoiceNumber as string | undefined
+    if (num?.startsWith(prefix)) {
+      const seq = parseInt(num.slice(prefix.length), 10)
+      if (!isNaN(seq) && seq > maxSeq) maxSeq = seq
+    }
+  })
+
+  return `${prefix}${String(maxSeq + 1).padStart(3, '0')}`
+}
+
+const onBillingAddressChange = async (e: Event) => {
+  const id = (e.target as HTMLSelectElement).value
+  invoice.billingAddressId = id
+  if (!id) return
+
+  isGeneratingNumber.value = true
+  try {
+    invoice.invoiceNumber = await generateInvoiceNumber(id)
+  } finally {
+    isGeneratingNumber.value = false
+  }
 }
 
 const onBillingSourceChange = (e: Event) => {
@@ -379,7 +419,7 @@ const goToPrint = () => router.push(`/print/${invoiceId.value}`)
 
 const saveInvoice = async () => {
   if (!invoice.invoiceNumber) {
-    showToast('請求書番号を入力してください', 'error')
+    showToast('請求書番号が設定されていません。請求先を選択すると自動採番されます。', 'error')
     return
   }
   if (!invoice.billingAddressId) {
@@ -423,6 +463,32 @@ const saveInvoice = async () => {
 </script>
 
 <style scoped>
+.invoice-number-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.invoice-number-field input {
+  flex: 1;
+}
+
+.generating-badge {
+  font-size: 12px;
+  color: #666;
+  white-space: nowrap;
+}
+
+.auto-generated-badge {
+  font-size: 11px;
+  background: #e8f5e9;
+  color: #2e7d32;
+  padding: 2px 8px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
 .invoice-form {
   max-width: 1200px;
   margin: 0 auto;
