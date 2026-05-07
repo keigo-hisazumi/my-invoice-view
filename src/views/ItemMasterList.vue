@@ -15,14 +15,20 @@
       <table class="item-table">
         <thead>
           <tr>
-            <th>品名</th>
-            <th>単価</th>
-            <th>単位</th>
+            <th class="sortable" @click="setSort('description')">
+              品名<span class="sort-icon">{{ sortKey === 'description' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ' ↕' }}</span>
+            </th>
+            <th class="sortable" @click="setSort('unitPrice')">
+              単価<span class="sort-icon">{{ sortKey === 'unitPrice' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ' ↕' }}</span>
+            </th>
+            <th class="sortable" @click="setSort('unit')">
+              単位<span class="sort-icon">{{ sortKey === 'unit' ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ' ↕' }}</span>
+            </th>
             <th>操作</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="item in items" :key="item.id" class="item-row">
+          <tr v-for="item in sortedItems" :key="item.id" class="item-row">
             <td data-label="品名" class="name">{{ item.description }}</td>
             <td data-label="単価" class="price">￥{{ item.unitPrice.toLocaleString() }}</td>
             <td data-label="単位">{{ item.unit || '-' }}</td>
@@ -38,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { collection, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore'
 import { db, auth } from '../firebase'
@@ -48,6 +54,33 @@ import type { ItemMaster } from '../types/invoice'
 const router = useRouter()
 const items = ref<ItemMaster[]>([])
 let unsubscribe: (() => void) | null = null
+
+type SortKey = 'description' | 'unitPrice' | 'unit'
+const sortKey = ref<SortKey>('description')
+const sortOrder = ref<'asc' | 'desc'>('asc')
+
+const sortedItems = computed(() => {
+  return [...items.value].sort((a, b) => {
+    const aVal = a[sortKey.value]
+    const bVal = b[sortKey.value]
+    let cmp = 0
+    if (typeof aVal === 'number' && typeof bVal === 'number') {
+      cmp = aVal - bVal
+    } else {
+      cmp = String(aVal ?? '').localeCompare(String(bVal ?? ''), 'ja')
+    }
+    return sortOrder.value === 'asc' ? cmp : -cmp
+  })
+})
+
+const setSort = (key: SortKey) => {
+  if (sortKey.value === key) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortKey.value = key
+    sortOrder.value = 'asc'
+  }
+}
 
 onMounted(async () => {
   await authReady
@@ -193,6 +226,20 @@ const deleteItem = async (id: string) => {
   font-weight: 600;
   color: #2c3e50;
   border-bottom: 2px solid #e9ecef;
+}
+
+.item-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.item-table th.sortable:hover {
+  background: #edf0f2;
+}
+
+.sort-icon {
+  font-size: 11px;
+  color: #888;
 }
 
 .item-table tbody tr {
