@@ -101,15 +101,23 @@ main {
   }
 
   .header-inner {
-    flex-wrap: nowrap;
+    display: grid;
+    grid-template-columns: 40px 1fr 40px;
+    align-items: center;
     position: static;
   }
 
   .header-text {
+    grid-column: 2;
     position: static;
     transform: none;
-    flex: 1;
-    min-width: 0;
+    text-align: center;
+  }
+
+  .header-user {
+    grid-column: 3;
+    margin-left: 0;
+    justify-self: end;
   }
 
   .app-header h1 {
