@@ -101,15 +101,15 @@ main {
   }
 
   .header-inner {
-    flex-direction: column;
-    gap: 12px;
+    flex-wrap: nowrap;
     position: static;
   }
 
   .header-text {
     position: static;
     transform: none;
-    width: auto;
+    flex: 1;
+    min-width: 0;
   }
 
   .app-header h1 {
@@ -137,11 +137,6 @@ main {
 
   .app-header p {
     font-size: 13px;
-  }
-
-  .header-user {
-    flex-wrap: wrap;
-    justify-content: center;
   }
 
   main {
