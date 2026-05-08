@@ -24,7 +24,6 @@ const handleLogout = async () => {
       <div class="header-inner">
         <div class="header-text">
           <h1>請求書作成システム</h1>
-          <p>請求書を作成・管理できます</p>
         </div>
         <div v-if="!isLoginPage && currentUser" class="header-user">
           <AdminSubmenu :email="currentUser.email ?? ''" @logout="handleLogout" />
@@ -44,10 +43,15 @@ const handleLogout = async () => {
 }
 
 .app-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #3D7DFF;
   color: white;
   padding: 30px 20px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
 }
 
 .header-inner {
@@ -77,12 +81,6 @@ const handleLogout = async () => {
   word-break: break-word;
 }
 
-.app-header p {
-  margin: 10px 0 0;
-  font-size: 16px;
-  opacity: 0.9;
-}
-
 .header-user {
   display: flex;
   align-items: center;
@@ -93,6 +91,7 @@ const handleLogout = async () => {
 
 main {
   padding: 20px;
+  padding-top: 120px;
 }
 
 @media (max-width: 768px) {
@@ -124,13 +123,9 @@ main {
     font-size: 24px;
   }
 
-  .app-header p {
-    font-size: 14px;
-    margin-top: 6px;
-  }
-
   main {
     padding: 16px 12px;
+    padding-top: 96px;
   }
 }
 
@@ -143,12 +138,9 @@ main {
     font-size: 20px;
   }
 
-  .app-header p {
-    font-size: 13px;
-  }
-
   main {
     padding: 12px 8px;
+    padding-top: 80px;
   }
 }
 </style>
