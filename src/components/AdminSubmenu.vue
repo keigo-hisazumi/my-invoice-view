@@ -49,9 +49,12 @@ onUnmounted(() => {
 
 <template>
   <div class="admin-submenu" ref="menuRef">
-    <button @click.stop="toggle" class="submenu-trigger" :class="{ active: isOpen }">
-      <span class="trigger-user-name">{{ email }}</span>
-      <span class="trigger-arrow" :class="{ open: isOpen }">&#9660;</span>
+    <button @click.stop="toggle" class="submenu-trigger" :class="{ active: isOpen }" aria-label="メニューを開く">
+      <span class="hamburger-icon">
+        <span></span>
+        <span></span>
+        <span></span>
+      </span>
     </button>
     <div v-if="isOpen" class="submenu-dropdown">
       <div class="submenu-user-section">
@@ -86,17 +89,15 @@ onUnmounted(() => {
 .submenu-trigger {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
   background: rgba(255, 255, 255, 0.15);
-  color: white;
   border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 6px;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
   transition: background 0.2s;
-  white-space: nowrap;
 }
 
 .submenu-trigger:hover,
@@ -104,20 +105,33 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.25);
 }
 
-.trigger-user-name {
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.hamburger-icon {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 20px;
 }
 
-.trigger-arrow {
-  font-size: 10px;
-  transition: transform 0.2s;
-  opacity: 0.8;
+.hamburger-icon span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: white;
+  border-radius: 1px;
+  transition: transform 0.2s, opacity 0.2s;
 }
 
-.trigger-arrow.open {
-  transform: rotate(180deg);
+.submenu-trigger.active .hamburger-icon span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.submenu-trigger.active .hamburger-icon span:nth-child(2) {
+  opacity: 0;
+}
+
+.submenu-trigger.active .hamburger-icon span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
 }
 
 .submenu-dropdown {
@@ -198,10 +212,6 @@ onUnmounted(() => {
 }
 
 @media (max-width: 480px) {
-  .trigger-user-name {
-    max-width: 120px;
-  }
-
   .submenu-dropdown {
     right: 0;
     min-width: 180px;
