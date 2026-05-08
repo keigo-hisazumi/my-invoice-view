@@ -47,6 +47,11 @@ const handleLogout = async () => {
   color: white;
   padding: 30px 20px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
 }
 
 .header-inner {
@@ -86,6 +91,7 @@ const handleLogout = async () => {
 
 main {
   padding: 20px;
+  padding-top: 120px;
 }
 
 @media (max-width: 768px) {
@@ -119,6 +125,7 @@ main {
 
   main {
     padding: 16px 12px;
+    padding-top: 96px;
   }
 }
 
@@ -133,6 +140,7 @@ main {
 
   main {
     padding: 12px 8px;
+    padding-top: 80px;
   }
 }
 </style>
