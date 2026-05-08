@@ -3,9 +3,6 @@
     <div class="list-header">
       <h2>請求書一覧</h2>
       <div class="header-actions">
-        <button @click="goToBillingSources" class="btn-secondary">請求元管理</button>
-        <button @click="goToBillingAddresses" class="btn-secondary">請求先管理</button>
-        <button @click="goToItems" class="btn-secondary">品目管理</button>
         <button @click="goToCreate" class="btn-create">+ 新規作成</button>
       </div>
     </div>
@@ -90,9 +87,6 @@ onUnmounted(() => {
 })
 
 const goToCreate = () => router.push('/create')
-const goToBillingSources = () => router.push('/billing-sources')
-const goToBillingAddresses = () => router.push('/billing-addresses')
-const goToItems = () => router.push('/items')
 const viewInvoice = (id: string) => router.push(`/view/${id}`)
 const editInvoice = (id: string) => router.push(`/edit/${id}`)
 
@@ -164,21 +158,6 @@ const formatDateTime = (dateStr: string) => {
   background: #229954;
 }
 
-.btn-secondary {
-  padding: 12px 24px;
-  background: #3498db;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 600;
-  transition: background 0.3s;
-}
-
-.btn-secondary:hover {
-  background: #2980b9;
-}
 
 .empty-state {
   text-align: center;
@@ -313,8 +292,7 @@ const formatDateTime = (dateStr: string) => {
     gap: 10px;
   }
 
-  .btn-create,
-  .btn-secondary {
+  .btn-create {
     width: 100%;
   }
 

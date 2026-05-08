@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
 import { useAuth } from './composables/useAuth'
 import ToastNotification from './components/ToastNotification.vue'
+import AdminSubmenu from './components/AdminSubmenu.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -26,8 +27,7 @@ const handleLogout = async () => {
           <p>請求書を作成・管理できます</p>
         </div>
         <div v-if="!isLoginPage && currentUser" class="header-user">
-          <span class="user-name">{{ currentUser.email }} さん</span>
-          <button @click="handleLogout" class="btn-logout">ログアウト</button>
+          <AdminSubmenu :email="currentUser.email ?? ''" @logout="handleLogout" />
         </div>
       </div>
     </header>
@@ -90,26 +90,6 @@ const handleLogout = async () => {
   margin-left: auto;
 }
 
-.user-name {
-  font-size: 14px;
-  opacity: 0.95;
-}
-
-.btn-logout {
-  padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  transition: background 0.2s;
-}
-
-.btn-logout:hover {
-  background: rgba(255, 255, 255, 0.25);
-}
 
 main {
   padding: 20px;
@@ -121,15 +101,23 @@ main {
   }
 
   .header-inner {
-    flex-direction: column;
-    gap: 12px;
+    display: grid;
+    grid-template-columns: 40px 1fr 40px;
+    align-items: center;
     position: static;
   }
 
   .header-text {
+    grid-column: 2;
     position: static;
     transform: none;
-    width: auto;
+    text-align: center;
+  }
+
+  .header-user {
+    grid-column: 3;
+    margin-left: 0;
+    justify-self: end;
   }
 
   .app-header h1 {
@@ -157,11 +145,6 @@ main {
 
   .app-header p {
     font-size: 13px;
-  }
-
-  .header-user {
-    flex-wrap: wrap;
-    justify-content: center;
   }
 
   main {
