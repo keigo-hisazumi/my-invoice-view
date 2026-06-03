@@ -151,7 +151,7 @@ const handleSubmit = async () => {
 .btn-login {
   margin-top: 6px;
   padding: 12px;
-  background: #667eea;
+  background: #3D7DFF;
   color: white;
   border: none;
   border-radius: 4px;
