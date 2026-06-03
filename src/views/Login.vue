@@ -151,7 +151,7 @@ const handleSubmit = async () => {
 .btn-login {
   margin-top: 6px;
   padding: 12px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #667eea;
   color: white;
   border: none;
   border-radius: 4px;
