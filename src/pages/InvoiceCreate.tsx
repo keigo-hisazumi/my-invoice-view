@@ -8,7 +8,8 @@ import type { InvoiceData, InvoiceItem, BillingAddress, BillingSource, ItemMaste
 import { useToast } from '../contexts/ToastContext'
 
 function makeItem(): InvoiceItem {
-  return { id: crypto.randomUUID(), description: '', quantity: 1, unitPrice: 0, unit: '', amount: 0 }
+  // 明細追加時は数量を空欄で始める（未入力状態を表すため0を初期値とする）
+  return { id: crypto.randomUUID(), description: '', quantity: 0, unitPrice: 0, unit: '', amount: 0 }
 }
 
 const oneMonthLater = new Date()
@@ -355,8 +356,8 @@ export default function InvoiceCreate() {
                   type="number"
                   min="0"
                   step="1"
-                  value={item.quantity}
-                  onChange={e => updateItemAt(index, { quantity: Number(e.target.value) })}
+                  value={item.quantity === 0 ? '' : item.quantity}
+                  onChange={e => updateItemAt(index, { quantity: e.target.value === '' ? 0 : Number(e.target.value) })}
                 />
               ) : (
                 <span className="readonly-value">{item.quantity}</span>
