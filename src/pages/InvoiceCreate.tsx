@@ -30,7 +30,7 @@ function initialInvoice(): InvoiceData {
     companyEmail: '',
     items: [makeItem()],
     subtotal: 0,
-    taxRate: 10,
+    taxRate: 0,
     tax: 0,
     total: 0,
     notes: ''
