@@ -17,8 +17,24 @@ permissions:
   contents: read
 
 jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Node.js のセットアップ
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - name: 依存関係のインストール
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+
   build:
     name: Build
+    needs: lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
