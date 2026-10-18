@@ -65,7 +65,7 @@ npm install
 npm run dev
 ```
 
-ブラウザで http://localhost:5173/ にアクセスします。
+ブラウザで <http://localhost:5173/> にアクセスします。
 
 ### ビルド
 
@@ -108,7 +108,7 @@ npm run preview
 
 ## プロジェクト構造
 
-```
+```text
 .
 ├── src/
 │   ├── components/
@@ -137,4 +137,3 @@ MIT
 ## 貢献
 
 プルリクエストや Issue を歓迎します。
-
