@@ -1,0 +1,21 @@
+rules_version = '2';
+
+// my-invoice-view 用の Firestore ルール（Firebase コンソールの Firestore ▸ ルール に貼る）
+// 請求書・請求先・請求元・品目は、ドキュメントの uid が自分のものだけ読み書きできる。uid の書き換えは断る
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner(data) {
+      return request.auth != null && data.uid == request.auth.uid;
+    }
+
+    match /{collection}/{docId} {
+      allow read, delete: if collection in ['invoices', 'billingAddresses', 'billingSources', 'itemMasters']
+        && isOwner(resource.data);
+      allow create: if collection in ['invoices', 'billingAddresses', 'billingSources', 'itemMasters']
+        && isOwner(request.resource.data);
+      allow update: if collection in ['invoices', 'billingAddresses', 'billingSources', 'itemMasters']
+        && isOwner(resource.data)
+        && isOwner(request.resource.data);
+    }
+  }
+}
